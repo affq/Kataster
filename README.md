@@ -36,8 +36,8 @@ W związku z tym oznaczenia klasoużytków mogą przyjmować następujące warto
 | --------------------------------------------------- | ---- | --- | --- |
 | - | B, Ba, Bi, Bp, Bz, K, dr, Tk, Ti, Tp, Wm, Wp, Ws, Tr | - | OFU |
 | - | Ls, Lz, N | - | OFU |
-| R |  | I, II, IIIa, IIIb, IVa, IVb, V, VI, VIz | OFU = OZU |
-| Ł, Ps, Ls, Lz |  | I, II, III, IV, V, VI | OFU = OZU |
+| R | < | I, II, IIIa, IIIb, IVa, IVb, V, VI, VIz | OFU = OZU |
+| Ł, Ps, Ls, Lz | < | I, II, III, IV, V, VI | OFU = OZU |
 | R | S, Br, Wsr, W, Lzr | I, II, IIIa, IIIb, IVa, IVb, V, VI, VIz | OFU ≠ OZU |
 | Ł, Ps | S, Br, Wsr, W, Lzr | I, II, III, IV, V, VI| OFU ≠ OZU |
 | Ls, Lz | W | I, II, III, IV, V, VI| OFU ≠ OZU |
@@ -45,6 +45,6 @@ W związku z tym oznaczenia klasoużytków mogą przyjmować następujące warto
 ---
 
 Budowa oznaczenia:
-- dla samego OFU: [OFU], np. 25-20/B
+- dla OFU: [OFU], np. 25-20/B
 - dla OFU = OZU: [OFU=OZU][OZK], np. 25-20/RIIIa
 - dla OFU ≠ OZU: [OFU]-[OZU][OZK], np. 25-20/Br-RIIIa
