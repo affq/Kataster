@@ -1,4 +1,5 @@
-Program sprawdza poprawność oznaczeń klasoużytków w pliku.
+Program sprawdza poprawność oznaczeń klasoużytków w pliku. 
+W przypadku błędnego oznaczenia informuje użytkownika o tym, co jest nie tak w oznaczeniu.
 
 ---
 
