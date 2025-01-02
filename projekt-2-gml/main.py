@@ -108,6 +108,28 @@ def stworz_udzial(udzial):
 
     return UdzialWeWlasnosci(rodzajPrawa, licznikUlamkaOkreslajacegoWartoscUdzialu, mianownikUlamkaOkreslajacegoWartoscUdzialu)
 
+def stworz_adres(adres):
+    miejscowosc = adres.find('egb:miejscowosc').text
+    kodPocztowy = adres.find('egb:kodPocztowy').text
+    ulica = adres.find('egb:ulica').text
+    numerPorzadkowy = adres.find('egb:numerPorzadkowy').text
+
+    return Adres(miejscowosc, kodPocztowy, ulica, numerPorzadkowy)
+
+def stworz_osobe(osobaFizyczna, adres):
+    pierwszeImie = osobaFizyczna.find('egb:pierwszeImie').text
+    pierwszyCzlonNazwiska = osobaFizyczna.find('egb:pierwszyCzlonNazwiska').text
+    drugieImie = osobaFizyczna.find('egb:drugieImie').text
+    imieOjca = osobaFizyczna.find('egb:imieOjca').text
+    imieMatki = osobaFizyczna.find('egb:imieMatki').text
+    pesel = osobaFizyczna.find('egb:pesel').text
+    plec = osobaFizyczna.find('egb:plec').text
+    status = osobaFizyczna.find('egb:status').text
+
+    adresOsobyFizycznej = stworz_adres(adres)
+
+    return OsobaFizyczna(pierwszeImie, pierwszyCzlonNazwiska, drugieImie, imieOjca, imieMatki, pesel, plec, status, adresOsobyFizycznej)
+
 dzialki = []
 for dzialka in soup.find_all('egb:EGB_DzialkaEwidencyjna'):
     obiekt_dzialka = stworz_dzialke(dzialka)
@@ -126,10 +148,88 @@ for kontur in soup.find_all('egb:EGB_KonturUzytkuGruntowego'):
     obiekt_kontur = stworz_kontur(kontur)
     kontury.append(obiekt_kontur)            
 
-udzialy = []
+def stworz_instytucje(instytucja, adres):
+    nazwaPelna = instytucja.find('egb:nazwaPelna').text
+    nazwaSkrocona = instytucja.find('egb:nazwaSkrocona').text
+    regon = instytucja.find('egb:regon').text
+    status = instytucja.find('egb:status').text
+    adresInstytucji = stworz_adres(adres)
+
+    return Instytucja(nazwaPelna, nazwaSkrocona, regon, status, adresInstytucji)
+
+def stworz_podmiot(podmiot, soup=soup):
+    name = podmiot.name
+    link = podmiot.get('xlink:href')
+    if name == 'egb:osobaFizyczna':
+        podmiot = soup.find('egb:EGB_OsobaFizyczna', {'gml:id': link})
+        adres_link = podmiot.find('egb:adresOsobyFizycznej').get('xlink:href')
+        adres = soup.find('egb:EGB_AdresZameldowania', {'gml:id': adres_link})
+        return stworz_osobe(podmiot, adres)
+    elif name == 'egb:instytucja1':
+        podmiot = soup.find('egb:EGB_Instytucja', {'gml:id': link})
+        adres_link = podmiot.find('egb:adresInstytucji').get('xlink:href')
+        adres = soup.find('egb:EGB_AdresZameldowania', {'gml:id': adres_link})
+        return stworz_instytucje(podmiot, adres)
+    elif name == 'egb:malzenstwo':
+        podmiot = soup.find('egb:EGB_Malzenstwo', {'gml:id': link})
+        osobaFizyczna2_link = podmiot.find('egb:osobaFizyczna2').get('xlink:href')
+        osobaFizyczna3_link = podmiot.find('egb:osobaFizyczna3').get('xlink:href')
+        osobaFizyczna2 = soup.find('egb:EGB_OsobaFizyczna', {'gml:id': osobaFizyczna2_link})
+        osobaFizyczna2_adres = osobaFizyczna2.find('egb:adresOsobyFizycznej').get('xlink:href')
+        osobaFizyczna2_adres = soup.find('egb:EGB_AdresZameldowania', {'gml:id': osobaFizyczna2_adres})
+        osobaFizyczna3 = soup.find('egb:EGB_OsobaFizyczna', {'gml:id': osobaFizyczna3_link})
+        osobaFizyczna3_adres = osobaFizyczna3.find('egb:adresOsobyFizycznej').get('xlink:href')
+        osobaFizyczna3_adres = soup.find('egb:EGB_AdresZameldowania', {'gml:id': osobaFizyczna3_adres})
+
+        osobaFizyczna2 = stworz_osobe(osobaFizyczna2, osobaFizyczna2_adres)
+        osobaFizyczna3 = stworz_osobe(osobaFizyczna3, osobaFizyczna3_adres)
+        return Malzenstwo(osobaFizyczna2, osobaFizyczna3)
+
+class Instytucja:
+    def __init__(self, nazwaPelna, nazwaSkrocona, regon, status, adresInstytucji):
+        self.nazwaPelna = nazwaPelna
+        self.nazwaSkrocona = nazwaSkrocona
+        self.regon = regon
+        self.status = status
+        self.adresInstytucji = adresInstytucji
+
+    def __str__(self):
+        return f'{self.nazwaPelna=}, {self.nazwaSkrocona=}, {self.regon=}, {self.status=}, {self.adresInstytucji=}'
+
+class Malzenstwo:
+    def __init__(self, osobaFizyczna1, osobaFizyczna2):
+        self.osobaFizyczna1 = osobaFizyczna1
+        self.osobaFizyczna2 = osobaFizyczna2
+
+    def __str__(self):
+        return f'{self.osobaFizyczna1=}, {self.osobaFizyczna2=}'
+
+class Adres:
+    def __init__(self, miejscowosc, kodPocztowy, ulica, numerPorzadkowy):
+        self.miejscowosc = miejscowosc
+        self.kodPocztowy = kodPocztowy
+        self.ulica = ulica
+        self.numerPorzadkowy = numerPorzadkowy
+
+class OsobaFizyczna:
+    def __init__(self, pierwszeImie, pierwszyCzlonNazwiska, drugieImie, imieOjca, imieMatki, pesel, plec, status, adresOsobyFizycznej):
+        self.pierwszeImie = pierwszeImie
+        self.pierwszyCzlonNazwiska = pierwszyCzlonNazwiska
+        self.drugieImie = drugieImie
+        self.imieOjca = imieOjca
+        self.imieMatki = imieMatki
+        self.pesel = pesel
+        self.plec = plec
+        self.status = status
+        self.adresOsobyFizycznej = adresOsobyFizycznej
+
+    def __str__(self):
+        return f'{self.imie=}, {self.nazwisko=}, {self.pesel=}'
+
+podmioty = []
 for udzial in soup.find_all('egb:EGB_UdzialWeWlasnosci'):
     obiekt_udzial = stworz_udzial(udzial)
     for podmiotUdzialuWlasnosci in udzial.find_all('egb:EGB_Podmiot'):
         for child in podmiotUdzialuWlasnosci.children:
             if child.name:
-                obiekt_podmiotUdzialuWlasnosci = PodmiotUdzialuWlasnosci(child)
+                podmiot = stworz_podmiot(child)
