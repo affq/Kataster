@@ -1,105 +1,8 @@
 from bs4 import BeautifulSoup
+from obiekty import DzialkaEwidencyjna, Klasouzytek, Budynek, Kontur, UdzialWeWlasnosci, Adres, OsobaFizyczna, Instytucja, Malzenstwo
 
-with open('gml.xml', 'r', encoding='utf-8') as f:
+with open('projekt-2-gml\gml.xml', 'r', encoding='utf-8') as f:
     soup = BeautifulSoup(f, 'xml')
-
-class Klasouzytek:
-    def __init__(self, OFU, OZU, OZK, powierzchnia):
-        self.OFU = OFU
-        self.OZU = OZU
-        self.OZK = OZK
-        self.powierzchnia = powierzchnia
-    
-    def __str__(self):
-        return f'OFU: {self.OFU}, OZU: {self.OZU}, OZK: {self.OZK}, powierzchnia: {self.powierzchnia}'
-
-class DzialkaEwidencyjna:
-    def __init__(self, idDzialki, geometria, numerKW, poleEwidencyjne):
-        self.idDzialki = idDzialki
-        self.geometria = geometria
-        self.numerKW = numerKW
-        self.poleEwidencyjne = poleEwidencyjne
-        self.Klasouzytki = []
-    
-    def add_klasouzytek(self, klasouzytek):
-        self.Klasouzytki.append(klasouzytek)
-    
-    def __str__(self):
-        return f'{self.idDzialki}'
-
-class Budynek:
-    def __init__(self, idBudynku, geometria, rodzajWgKST, liczbaKondygnacjiNadziemnych, liczbaKondygnacjiPodziemnych, powZabudowy):
-        self.idBudynku = idBudynku
-        self.geometria = geometria
-        self.rodzajWgKST = rodzajWgKST
-        self.liczbaKondygnacjiNadziemnych = liczbaKondygnacjiNadziemnych
-        self.liczbaKondygnacjiPodziemnych = liczbaKondygnacjiPodziemnych
-        self.powZabudowy = powZabudowy
-    
-    def __str__(self):
-        return f'{self.idBudynku=}, {self.powZabudowy=} '
-
-class Kontur:
-    def __init__(self, idUzytku, geometria, OFU):
-        self.idUzytku = idUzytku
-        self.geometria = geometria
-        self.OFU = OFU
-    
-    def __str__(self):
-        return f'{self.idUzytku=}, {self.OFU=}'
-
-class UdzialWeWlasnosci:
-    def __init__(self, rodzajPrawa, licznikUlamkaOkreslajacegoWartoscUdzialu, mianownikUlamkaOkreslajacegoWartoscUdzialu):
-        self.rodzajPrawa = rodzajPrawa
-        self.licznikUlamkaOkreslajacegoWartoscUdzialu = licznikUlamkaOkreslajacegoWartoscUdzialu
-        self.mianownikUlamkaOkreslajacegoWartoscUdzialu = mianownikUlamkaOkreslajacegoWartoscUdzialu
-        self.przedmiotUdzialuWlasnosci = None
-        self.podmiotUdzialuWlasnosci = []
-    
-    def add_podmiotUdzialuWlasnosci(self, podmiotUdzialuWlasnosci):
-        self.podmiotUdzialuWlasnosci.append(podmiotUdzialuWlasnosci)
-
-class Instytucja:
-    def __init__(self, nazwaPelna, nazwaSkrocona, regon, status, adresInstytucji):
-        self.nazwaPelna = nazwaPelna
-        self.nazwaSkrocona = nazwaSkrocona
-        self.regon = regon
-        self.status = status
-        self.adresInstytucji = adresInstytucji
-
-    def __str__(self):
-        return f'{self.nazwaPelna}'
-
-class Malzenstwo:
-    def __init__(self, osobaFizyczna1, osobaFizyczna2):
-        self.osobaFizyczna1 = osobaFizyczna1
-        self.osobaFizyczna2 = osobaFizyczna2
-
-    def __str__(self):
-        return f'{self.osobaFizyczna1.pierwszeImie} {self.osobaFizyczna1.pierwszyCzlonNazwiska}, {self.osobaFizyczna1.pesel} oraz {self.osobaFizyczna2.pierwszeImie} {self.osobaFizyczna2.pierwszyCzlonNazwiska}, {self.osobaFizyczna2.pesel}'
-
-class Adres:
-    def __init__(self, miejscowosc, kodPocztowy, ulica, numerPorzadkowy):
-        self.miejscowosc = miejscowosc
-        self.kodPocztowy = kodPocztowy
-        self.ulica = ulica
-        self.numerPorzadkowy = numerPorzadkowy
-        
-
-class OsobaFizyczna:
-    def __init__(self, pierwszeImie, pierwszyCzlonNazwiska, drugieImie, imieOjca, imieMatki, pesel, plec, status, adresOsobyFizycznej):
-        self.pierwszeImie = pierwszeImie
-        self.pierwszyCzlonNazwiska = pierwszyCzlonNazwiska
-        self.drugieImie = drugieImie
-        self.imieOjca = imieOjca
-        self.imieMatki = imieMatki
-        self.pesel = pesel
-        self.plec = plec
-        self.status = status
-        self.adresOsobyFizycznej = adresOsobyFizycznej
-
-    def __str__(self):
-        return f'{self.pierwszeImie} {self.pierwszyCzlonNazwiska}, {self.pesel}'
 
 def stworz_dzialke(dzialka):
     idDzialki = dzialka.find('egb:idDzialki').text
@@ -141,13 +44,14 @@ def stworz_kontur(kontur):
 
     return Kontur(idUzytku, geometria, OFU)
 
-def stworz_udzial(udzial):
+def stworz_udzial(udzial, podmiot, przedmiot):
     rodzajPrawa = udzial.find('egb:rodzajPrawa').text
     licznikUlamkaOkreslajacegoWartoscUdzialu = udzial.find('egb:licznikUlamkaOkreslajacegoWartoscUdzialu').text
     mianownikUlamkaOkreslajacegoWartoscUdzialu = udzial.find('egb:mianownikUlamkaOkreslajacegoWartoscUdzialu').text
-    przedmiotUdzialuWlasnosci = udzial.find('egb:przedmiotUdzialuWlasnosci').text
+    podmiotUdzialuWlasnosci = podmiot
+    przedmiotUdzialuWlasnosci = przedmiot
 
-    return UdzialWeWlasnosci(rodzajPrawa, licznikUlamkaOkreslajacegoWartoscUdzialu, mianownikUlamkaOkreslajacegoWartoscUdzialu)
+    return UdzialWeWlasnosci(rodzajPrawa, licznikUlamkaOkreslajacegoWartoscUdzialu, mianownikUlamkaOkreslajacegoWartoscUdzialu, podmiotUdzialuWlasnosci, przedmiotUdzialuWlasnosci)
 
 def stworz_adres(adres):
     miejscowosc = adres.find('egb:miejscowosc').text
@@ -211,13 +115,14 @@ def stworz_podmiot(podmiot, soup=soup):
 
         return Malzenstwo(osobaFizyczna2, osobaFizyczna3)
 
-dzialki = []
+
+dzialki = {}
 for dzialka in soup.find_all('egb:EGB_DzialkaEwidencyjna'):
     obiekt_dzialka = stworz_dzialke(dzialka)
     for klasouzytek in dzialka.find_all('egb:klasouzytek'):
         obiekt_klasouzytek = stworz_klasouzytek(klasouzytek)
         obiekt_dzialka.add_klasouzytek(obiekt_klasouzytek)
-    dzialki.append(obiekt_dzialka)
+    dzialki[obiekt_dzialka.idDzialki] = obiekt_dzialka
 
 budynki = []
 for budynek in soup.find_all('egb:EGB_Budynek'):
@@ -229,11 +134,24 @@ for kontur in soup.find_all('egb:EGB_KonturUzytkuGruntowego'):
     obiekt_kontur = stworz_kontur(kontur)
     kontury.append(obiekt_kontur)     
 
-podmioty = []
+udzialy = []
 for udzial in soup.find_all('egb:EGB_UdzialWeWlasnosci'):
-    obiekt_udzial = stworz_udzial(udzial)
     for podmiotUdzialuWlasnosci in udzial.find_all('egb:EGB_Podmiot'):
         for child in podmiotUdzialuWlasnosci.children:
             if child.name:
                 podmiot = stworz_podmiot(child)
-                print(podmiot)
+    
+    JRG = udzial.find('egb:JRG').get('xlink:href')
+    if JRG is None:
+        print(f"Brak JRG dla {JRG}")
+    przedmiot = soup.find('egb:JRG2', {'xlink:href': JRG}).parent
+    id_przedmiotu = przedmiot.find('egb:idDzialki').text
+    przedmiot = dzialki[id_przedmiotu] if id_przedmiotu in dzialki else None
+    obiekt_udzial = stworz_udzial(udzial, podmiot, przedmiot)
+    dzialki[id_przedmiotu].add_udzial(obiekt_udzial) if id_przedmiotu in dzialki else None
+    udzialy.append(obiekt_udzial)
+
+for dzialka in dzialki:
+    print(f"Działka {dzialki[dzialka].idDzialki}")
+    for udzial in dzialki[dzialka].udzialy:
+        print(f"{udzial.licznikUlamkaOkreslajacegoWartoscUdzialu}/{udzial.mianownikUlamkaOkreslajacegoWartoscUdzialu} {udzial.podmiotUdzialuWlasnosci}")
