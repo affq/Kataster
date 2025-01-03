@@ -8,44 +8,56 @@ class Klasouzytek:
     def __str__(self):
         return f'OFU: {self.OFU}, OZU: {self.OZU}, OZK: {self.OZK}, powierzchnia: {self.powierzchnia}'
 
-class DzialkaEwidencyjna:
-    def __init__(self, idDzialki, geometria, numerKW, poleEwidencyjne):
-        self.idDzialki = idDzialki
+class Obiekt:
+    def __init__(self, color, podpis, geometria):
+        self.color = color
+        self.podpis = podpis
         self.geometria = geometria
+        self.narysowany = False
+
+class DzialkaEwidencyjna(Obiekt):
+    def __init__(self, idDzialki, geometria, numerKW, poleEwidencyjne):
+        super().__init__('blue', idDzialki, geometria)
+        self.idDzialki = idDzialki
         self.numerKW = numerKW
         self.poleEwidencyjne = poleEwidencyjne
-        self.Klasouzytki = []
+        self.klasouzytki = []
         self.udzialy = []
-    
+        self.budynki = []
+
     def add_udzial(self, udzial):
         self.udzialy.append(udzial)
 
     def add_klasouzytek(self, klasouzytek):
-        self.Klasouzytki.append(klasouzytek)
+        self.klasouzytki.append(klasouzytek)
+    
+    def add_budynek(self, budynek):
+        self.budynki.append(budynek)
     
     def __str__(self):
         return f'{self.idDzialki}'
 
-class Budynek:
-    def __init__(self, idBudynku, geometria, rodzajWgKST, liczbaKondygnacjiNadziemnych, liczbaKondygnacjiPodziemnych, powZabudowy):
+class Budynek(Obiekt):
+    def __init__(self, idBudynku, geometria, rodzajWgKST, liczbaKondygnacjiNadziemnych, liczbaKondygnacjiPodziemnych, powZabudowy, dzialka):
+        super().__init__('red', idBudynku, geometria)
         self.idBudynku = idBudynku
-        self.geometria = geometria
         self.rodzajWgKST = rodzajWgKST
         self.liczbaKondygnacjiNadziemnych = liczbaKondygnacjiNadziemnych
         self.liczbaKondygnacjiPodziemnych = liczbaKondygnacjiPodziemnych
         self.powZabudowy = powZabudowy
+        self.dzialka = dzialka
     
     def __str__(self):
         return f'{self.idBudynku=}, {self.powZabudowy=} '
 
-class Kontur:
+class Kontur(Obiekt):
     def __init__(self, idUzytku, geometria, OFU):
+        super().__init__('green', idUzytku, geometria)
         self.idUzytku = idUzytku
-        self.geometria = geometria
         self.OFU = OFU
-    
+
     def __str__(self):
-        return f'{self.idUzytku=}, {self.OFU=}'
+        return f'{self.idUzytku=}, {self.geometria=}'
 
 class UdzialWeWlasnosci:
     def __init__(self, rodzajPrawa, licznikUlamkaOkreslajacegoWartoscUdzialu, mianownikUlamkaOkreslajacegoWartoscUdzialu, podmiotUdzialuWlasnosci, przedmiotUdzialuWlasnosci):
@@ -81,7 +93,6 @@ class Adres:
         self.ulica = ulica
         self.numerPorzadkowy = numerPorzadkowy
         
-
 class OsobaFizyczna:
     def __init__(self, pierwszeImie, pierwszyCzlonNazwiska, drugieImie, imieOjca, imieMatki, pesel, plec, status, adresOsobyFizycznej):
         self.pierwszeImie = pierwszeImie
