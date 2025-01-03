@@ -1,3 +1,4 @@
+## Projekt 1 - weryfikacja poprawności oznaczeń klasoużytków w pliku
 Program sprawdza poprawność oznaczeń klasoużytków w pliku. 
 W przypadku błędnego oznaczenia informuje użytkownika o tym, co jest nie tak w oznaczeniu.
 
@@ -49,3 +50,11 @@ Budowa oznaczenia:
 - dla OFU: [OFU], np. 25-20/B
 - dla OFU = OZU: [OFU=OZU][OZK], np. 25-20/RIIIa
 - dla OFU ≠ OZU: [OFU]-[OZU][OZK], np. 25-20/Br-RIIIa
+
+---
+### Przykład działania programu - wypis błędów w konsoli
+![image](https://github.com/user-attachments/assets/819d12c7-a48f-470c-ba48-231666e91e4f)
+
+---
+## Projekt 2 - program czytający oraz rysujący działki, budynki oraz użytki z pliku GML
+
