@@ -14,6 +14,7 @@ class Obiekt:
         self.podpis = podpis
         self.geometria = geometria
         self.narysowany = False
+        self.polygon = None
 
 class DzialkaEwidencyjna(Obiekt):
     def __init__(self, idDzialki, geometria, numerKW, poleEwidencyjne):

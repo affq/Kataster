@@ -3,6 +3,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import customtkinter as ctk
 from tkinter import filedialog
 from stworz_obiekty import *
+from matplotlib.patches import Polygon
 
 class Canvas:
     def __init__(self, root, main):
@@ -24,12 +25,14 @@ class Canvas:
         self.canvas.mpl_connect('scroll_event', self.zoom)
         self.canvas.mpl_connect('button_press_event', self.mouse_button)
         self.canvas.mpl_connect('motion_notify_event', self.motion)
+        # self.canvas.mpl_connect('pick_event', self.show_info)
         self.canvas.get_tk_widget().pack(fill='both', expand=True)
         self.pencil_color = 'black'
         self.pressed = None
         self.narysowane = {}
         self.main = main
-        self.zoom = None
+        self.xlim = None
+        self.ylim = None
     
     def reset(self):
         self.plt.xticks([])
@@ -56,6 +59,12 @@ class Canvas:
             self.pressed = (event.x, event.y)
             self.xlim = self.ax.get_xlim()
             self.ylim = self.ax.get_ylim()
+        if event.dblclick:  # Sprawdzanie podwójnego kliknięcia
+            for artist in reversed(self.ax.patches):  # Przeszukiwanie obiektów na osi
+                if artist.contains_point((event.x, event.y)):
+                    label = artist.get_label()
+                    print(f'Podwójne kliknięcie na obiekcie: {label}')
+                    return
     
     def get_lim(self, lim, data, factor):
         l_dist = (data - lim[0]) * factor
@@ -76,13 +85,21 @@ class Canvas:
         koordynaty = list(map(float, obiekt.geometria.split()))
         x = koordynaty[::2]
         y = koordynaty[1::2]
-        self.ax.plot(x, y, color=obiekt.color)
+        polygon = Polygon(list(zip(x, y)), closed=True, color=obiekt.color, alpha=0.5, picker=True, label=obiekt.podpis, fill=False)
+        self.ax.add_patch(polygon)
 
-        x = sum(x) / len(x) - 15
+        if isinstance(obiekt, Budynek):
+            x = sum(x) / len(x) - 5
+        else:
+            x = sum(x) / len(x) - 15
+
         y = sum(y) / len(y)
         self.ax.text(x, y, obiekt.podpis, fontsize=8, color=obiekt.color)
+        self.ax.relim()
+        self.ax.autoscale_view()
         self.canvas.draw()
         self.narysowane[obiekt.podpis] = obiekt
+        obiekt.polygon = polygon
     
     def add_objects(self, dzialki, budynki, kontury):
         self.dzialki = dzialki
@@ -96,6 +113,8 @@ class Canvas:
         else:
             obiekt.narysowany = True
             self.narysowane[obiekt.podpis] = obiekt
+        self.xlim = self.ax.get_xlim()
+        self.ylim = self.ax.get_ylim()
         self.redraw()
 
     def redraw(self):
@@ -105,11 +124,27 @@ class Canvas:
             koordynaty = list(map(float, obiekt.geometria.split()))
             x = koordynaty[::2]
             y = koordynaty[1::2]
-            self.ax.plot(x, y, color=obiekt.color)
-            x = sum(x) / len(x) - 15
+            polygon = Polygon(list(zip(x, y)), closed=True, color=obiekt.color, alpha=0.5, picker=True, label=obiekt.podpis, fill=False)
+            self.ax.add_patch(polygon)
+
+            if isinstance(obiekt, Budynek):
+                x = sum(x) / len(x) - 5
+            else:
+                x = sum(x) / len(x) - 15
             y = sum(y) / len(y)
             self.ax.text(x, y, obiekt.podpis, fontsize=8, color=obiekt.color)
-        self.canvas.draw()
+            self.narysowane[obiekt.podpis] = obiekt
+            self.ax.set_xlim(self.xlim)
+            self.ax.set_ylim(self.ylim)
+            self.canvas.draw()
+            obiekt.polygon = polygon
+    
+    def show_info(self, event): 
+        if event.mouseevent.name != 'button_press_event':
+            return  # Ignoruj inne typy zdarzeń (np. scrollowanie)
+        artist = event.artist  # Obiekt graficzny (np. linia wielokąta)
+        label = artist.get_label()  # Etykieta przypisana do obiektu
+        print(f'Wybrano obiekt: {label}')
 
 class MainWindow(ctk.CTk):
     def __init__(self):
