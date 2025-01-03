@@ -33,6 +33,7 @@ class Canvas:
         self.main = main
         self.xlim = None
         self.ylim = None
+        self.open_windows = []
     
     def reset(self):
         self.plt.xticks([])
@@ -63,9 +64,45 @@ class Canvas:
             for artist in reversed(self.ax.patches):  # Przeszukiwanie obiektów na osi
                 if artist.contains_point((event.x, event.y)):
                     label = artist.get_label()
-                    print(f'Podwójne kliknięcie na obiekcie: {label}')
-                    return
+                    obiekt = self.narysowane[label]
+                    self.obiekt_window(obiekt)
+                    break
     
+    def obiekt_window(self, obiekt):
+        if len(self.open_windows) > 0:
+            for window in self.open_windows:
+                window.destroy()
+
+        window = ctk.CTkToplevel(self.root)
+        window.title(obiekt.podpis)
+
+        self.open_windows.append(window)
+
+        if isinstance(obiekt, DzialkaEwidencyjna):
+            label = ctk.CTkLabel(window, text=f"Id działki: {obiekt.idDzialki}", font=self.main.FONT)
+            label.pack(padx=10, pady=10)
+            label = ctk.CTkLabel(window, text=f"Numer KW: {obiekt.numerKW}", font=self.main.FONT)
+            label.pack(padx=10, pady=10)
+            label = ctk.CTkLabel(window, text=f"Pole ewidencyjne: {obiekt.poleEwidencyjne} ha", font=self.main.FONT)
+            label.pack(padx=10, pady=10)
+            #udzialy i budynki
+        elif isinstance(obiekt, Budynek):
+            label = ctk.CTkLabel(window, text=f"Rodzaj wg KST: {obiekt.rodzajWgKST}", font=self.main.FONT)
+            label.pack(padx=10, pady=10)
+            label = ctk.CTkLabel(window, text=f"Liczba kondygnacji nadziemnych: {obiekt.liczbaKondygnacjiNadziemnych}", font=self.main.FONT)
+            label.pack(padx=10, pady=10)
+            label = ctk.CTkLabel(window, text=f"Liczba kondygnacji podziemnych: {obiekt.liczbaKondygnacjiPodziemnych}", font=self.main.FONT)
+            label.pack(padx=10, pady=10)
+            label = ctk.CTkLabel(window, text=f"Powierzchnia zabudowy: {obiekt.powZabudowy} m^2", font=self.main.FONT)
+            label.pack(padx=10, pady=10)
+            label = ctk.CTkLabel(window, text=f"Działka: {obiekt.dzialka.idDzialki}", font=self.main.FONT)
+            label.pack(padx=10, pady=10)
+        elif isinstance(obiekt, Kontur):
+            label = ctk.CTkLabel(window, text=f"OFU: {obiekt.OFU}", font=self.main.FONT)
+            label.pack(padx=10, pady=10)
+
+        window.mainloop()
+
     def get_lim(self, lim, data, factor):
         l_dist = (data - lim[0]) * factor
         r_dist = (lim[1] - data) * factor
@@ -138,13 +175,6 @@ class Canvas:
             self.ax.set_ylim(self.ylim)
             self.canvas.draw()
             obiekt.polygon = polygon
-    
-    def show_info(self, event): 
-        if event.mouseevent.name != 'button_press_event':
-            return  # Ignoruj inne typy zdarzeń (np. scrollowanie)
-        artist = event.artist  # Obiekt graficzny (np. linia wielokąta)
-        label = artist.get_label()  # Etykieta przypisana do obiektu
-        print(f'Wybrano obiekt: {label}')
 
 class MainWindow(ctk.CTk):
     def __init__(self):
