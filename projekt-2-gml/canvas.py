@@ -120,8 +120,8 @@ class Canvas:
     
     def draw_polygon(self, obiekt):
         koordynaty = list(map(float, obiekt.geometria.split()))
-        x = koordynaty[::2]
-        y = koordynaty[1::2]
+        y = koordynaty[::2]
+        x = koordynaty[1::2]
         polygon = Polygon(list(zip(x, y)), closed=True, color=obiekt.color, alpha=0.5, picker=True, label=obiekt.podpis, fill=False)
         self.ax.add_patch(polygon)
 
@@ -204,17 +204,8 @@ class MainWindow(ctk.CTk):
         self.dzialki_frame = ctk.CTkFrame(self.obiekty_frame)
         self.dzialki_frame.configure(width=10, height=40)
 
-        self.dzialki_nad_button = ctk.CTkFrame(self.dzialki_frame)
-        self.dzialki_nad_button.pack(side=ctk.TOP, padx=10, pady=10, fill='x')
-
-        self.dzialki_frame_label = ctk.CTkLabel(self.dzialki_nad_button, text="DZIAŁKI", font=self.FONT)
+        self.dzialki_frame_label = ctk.CTkLabel(self.dzialki_frame, text="DZIAŁKI", font=self.FONT)
         self.dzialki_frame_label.pack(fill="both", expand=True)
-
-        self.dzialki_left_frame = ctk.CTkFrame(self.dzialki_nad_button)
-        self.dzialki_left_frame.pack(side=ctk.LEFT, padx=10, pady=10, fill="x", expand=True)
-
-        self.dzialki_right_frame = ctk.CTkFrame(self.dzialki_nad_button)
-        self.dzialki_right_frame.pack(side=ctk.LEFT, padx=10, pady=10, fill="x", expand=True)
 
         self.canvas_frame = ctk.CTkFrame(frame)
         self.canvas_frame.pack(side=ctk.LEFT, padx=10, pady=10, fill="both", expand=True)
@@ -225,29 +216,14 @@ class MainWindow(ctk.CTk):
         self.budynki_frame.configure(width=10, height=40)
 
         self.budynki_frame_label = ctk.CTkLabel(self.budynki_frame, text="BUDYNKI", font=self.FONT)
-        self.budynki_frame_label.pack()
-
-        self.budynki_left_frame = ctk.CTkFrame(self.budynki_frame)
-        self.budynki_left_frame.pack(side=ctk.LEFT, padx=10, pady=10, fill="both", expand=True)
-
-        self.budynki_right_frame = ctk.CTkFrame(self.budynki_frame)
-        self.budynki_right_frame.pack(side=ctk.LEFT, padx=10, pady=10, fill="both", expand=True)
+        self.budynki_frame_label.pack(fill="both", expand=True)
 
         self.kontury_frame = ctk.CTkFrame(self.obiekty_frame)
         self.kontury_frame.configure(width=10, height=40)
 
-        self.kontury_nad_button = ctk.CTkFrame(self.kontury_frame)
-        self.kontury_nad_button.pack(side=ctk.TOP, padx=10, pady=10, fill='x')
-
-        self.kontury_frame_label = ctk.CTkLabel(self.kontury_nad_button, text="KONTURY", font=self.FONT)
-        self.kontury_frame_label.pack()
-
-        self.kontury_left_frame = ctk.CTkFrame(self.kontury_nad_button)
-        self.kontury_left_frame.pack(side=ctk.LEFT, padx=10, pady=10, fill="both", expand=True)
-
-        self.kontury_right_frame = ctk.CTkFrame(self.kontury_nad_button)
-        self.kontury_right_frame.pack(side=ctk.LEFT, padx=10, pady=10, fill="both", expand=True)
-
+        self.kontury_frame_label = ctk.CTkLabel(self.kontury_frame, text="KONTURY", font=self.FONT)
+        self.kontury_frame_label.pack(fill="both", expand=True)
+        
         self.mainloop()
 
     def load_gml(self):
@@ -262,17 +238,17 @@ class MainWindow(ctk.CTk):
             return
 
     def add_objects_to_list(self, dzialki, budynki, kontury):
-        widgets = [self.dzialki_left_frame, self.dzialki_right_frame, self.kontury_left_frame, self.kontury_right_frame, self.budynki_left_frame, self.budynki_right_frame]
+        widgets = [self.dzialki_frame, self.kontury_frame, self.budynki_frame]
         for widget in widgets:
             for w in widget.winfo_children():
                 w.destroy()
         
         if dzialki:
             self.dzialki_frame.pack_propagate(True)
-            self.dzialki_frame.pack(side=ctk.TOP, padx=10, pady=10, fill='x')
+            self.dzialki_frame.pack(side=ctk.TOP, padx=10, fill='both')
         if budynki:
             self.budynki_frame.pack_propagate(True)
-            self.budynki_frame.pack(side=ctk.TOP, padx=10, pady=10, fill='x')
+            self.budynki_frame.pack(side=ctk.TOP, padx=10, pady=10, fill='both')
         if kontury:
             self.kontury_frame.pack_propagate(True)
             self.kontury_frame.pack(side=ctk.TOP, padx=10, pady=10, fill='x')
@@ -281,29 +257,46 @@ class MainWindow(ctk.CTk):
             self.canvas.draw_polygon(dzialka)
             dzialka.narysowany = True
             var = ctk.BooleanVar(value=True)
-            if (i % 2) == 0:
-                checkbox = ctk.CTkCheckBox(self.dzialki_right_frame, text=f"{dzialka.idDzialki}", command=lambda dzialka=dzialka: self.canvas.change_visibility(dzialka), variable=var)
-            else:
-                checkbox = ctk.CTkCheckBox(self.dzialki_left_frame, text=f"{dzialka.idDzialki}", command=lambda dzialka=dzialka: self.canvas.change_visibility(dzialka), variable=var)
-            checkbox.pack(side=ctk.TOP, pady=3, padx=3, anchor=ctk.W)
+
+            checkbox = ctk.CTkCheckBox(
+                self.dzialki_frame,
+                text=f"{dzialka.podpis}",
+                command=lambda dzialka=dzialka: self.canvas.change_visibility(dzialka),
+                variable=var
+            )
+            row = i // 6 
+            col = i % 6
+            checkbox.grid(row=row, column=col, padx=5, pady=5, sticky="w")
 
         for i, kontur in enumerate(kontury):
-            var = ctk.BooleanVar(value=False)
-            if (i % 2) == 0:
-                checkbox = ctk.CTkCheckBox(self.kontury_right_frame, text=f"{kontur.idUzytku}", command=lambda kontur=kontur: self.canvas.change_visibility(kontur), variable=var)
-            else:
-                checkbox = ctk.CTkCheckBox(self.kontury_left_frame, text=f"{kontur.idUzytku}", command=lambda kontur=kontur: self.canvas.change_visibility(kontur), variable=var)
-            checkbox.pack(side=ctk.TOP, pady=3, padx=3, anchor=ctk.W)
+            # self.canvas.draw_polygon(kontur)
+            kontur.narysowany = True
+            var = ctk.BooleanVar(value=True)
+
+            checkbox = ctk.CTkCheckBox(
+                self.kontury_frame,
+                text=f"{kontur.podpis}",
+                command=lambda kontur=kontur: self.canvas.change_visibility(kontur),
+                variable=var
+            )
+            row = i // 6 
+            col = i % 6
+            checkbox.grid(row=row, column=col, padx=5, pady=5, sticky="w")
 
         for i, budynek in enumerate(budynki):
             self.canvas.draw_polygon(budynek)
             budynek.narysowany = True
             var = ctk.BooleanVar(value=True)
-            if (i % 2) == 0:
-                checkbox = ctk.CTkCheckBox(self.budynki_right_frame, text=f"{budynek.idBudynku}", command=lambda budynek=budynek: self.canvas.change_visibility(budynek), variable=var)
-            else:
-                checkbox = ctk.CTkCheckBox(self.budynki_left_frame, text=f"{budynek.idBudynku}", command=lambda budynek=budynek: self.canvas.change_visibility(budynek), variable=var)
-            checkbox.pack(side=ctk.TOP, pady=3, padx=3, anchor=ctk.W)
+
+            checkbox = ctk.CTkCheckBox(
+                self.budynki_frame,
+                text=f"{budynek.nrBudynku}",
+                command=lambda budynek=budynek: self.canvas.change_visibility(budynek),
+                variable=var
+            )
+            row = i // 6 
+            col = i % 6
+            checkbox.grid(row=row, column=col, padx=5, pady=5, sticky="w")
     
     def add_objects(self, dzialki, budynki, kontury):
         self.dzialki = dzialki

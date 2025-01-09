@@ -18,7 +18,8 @@ class Obiekt:
 
 class DzialkaEwidencyjna(Obiekt):
     def __init__(self, idDzialki, geometria, numerKW, poleEwidencyjne):
-        super().__init__('blue', idDzialki, geometria)
+        self.nrDzialki = idDzialki.split('.')[-1]       
+        super().__init__('blue', self.nrDzialki, geometria)
         self.idDzialki = idDzialki
         self.numerKW = numerKW
         self.poleEwidencyjne = poleEwidencyjne
@@ -40,9 +41,10 @@ class DzialkaEwidencyjna(Obiekt):
 
 class Budynek(Obiekt):
     def __init__(self, idBudynku, geometria, rodzajWgKST, liczbaKondygnacjiNadziemnych, liczbaKondygnacjiPodziemnych, powZabudowy, dzialka):
-        super().__init__('red', idBudynku, geometria)
-        self.idBudynku = idBudynku
+        self.nrBudynku = idBudynku.split('.')[-1].split('_')[0]
         self.rodzajWgKST = rodzajWgKST
+        super().__init__('black', self.rodzajWgKST, geometria)
+        self.idBudynku = idBudynku
         self.liczbaKondygnacjiNadziemnych = liczbaKondygnacjiNadziemnych
         self.liczbaKondygnacjiPodziemnych = liczbaKondygnacjiPodziemnych
         self.powZabudowy = powZabudowy
@@ -53,7 +55,8 @@ class Budynek(Obiekt):
 
 class Kontur(Obiekt):
     def __init__(self, idUzytku, geometria, OFU):
-        super().__init__('green', idUzytku, geometria)
+        self.nrUzytku = idUzytku.split('.')[-1]
+        super().__init__('green', self.nrUzytku, geometria)
         self.idUzytku = idUzytku
         self.OFU = OFU
 
