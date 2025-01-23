@@ -1,180 +1,164 @@
-import matplotlib.pyplot as plt
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import customtkinter as ctk
 from tkinter import filedialog
 from stworz_obiekty import *
-from matplotlib.patches import Polygon
+import folium
+from pyproj import Transformer
+from shapely.geometry import Polygon
 
-class Canvas:
-    def __init__(self, root, main):
-        self.dzialki = None
-        self.budynki = None
-        self.kontury = None
-        self.root = root
-        self.fig = plt.figure(figsize=(8, 8))
-        self.ax = self.fig.add_subplot(111)
-        self.ax.set_axis_off()
-        self.plt = plt
-        self.plt.xticks([])
-        self.plt.yticks([])
-        self.plt.gca().set_xticks([])
-        self.plt.gca().set_yticks([])
-        self.plt.grid(False)
-        self.ax.set_axis_off()
-        self.canvas = FigureCanvasTkAgg(self.fig, master=self.root)
-        self.canvas.mpl_connect('scroll_event', self.zoom)
-        self.canvas.mpl_connect('button_press_event', self.mouse_button)
-        self.canvas.mpl_connect('motion_notify_event', self.motion)
-        # self.canvas.mpl_connect('pick_event', self.show_info)
-        self.canvas.get_tk_widget().pack(fill='both', expand=True)
-        self.pencil_color = 'black'
-        self.pressed = None
-        self.narysowane = {}
-        self.main = main
-        self.xlim = None
-        self.ylim = None
-        self.open_windows = []
-    
-    def reset(self):
-        self.plt.xticks([])
-        self.plt.yticks([])
-        self.plt.gca().set_xticks([])
-        self.plt.gca().set_yticks([])
-        self.plt.grid(False)
-        self.ax.set_axis_off()
+transformer = Transformer.from_proj(2178, 4326)
 
-    def zoom(self, event):
-        factor = 0.8 if event.button == 'up' else 1.2
-        new_xlim = self.get_lim(self.ax.get_xlim(), event.xdata, factor)
-        new_ylim = self.get_lim(self.ax.get_ylim(), event.ydata, factor)
-        self.ax.set_xlim(new_xlim)
-        self.ax.set_ylim(new_ylim)
-        self.canvas.draw()
-    
-    def get_dist(self, lim, fig_size, xy, pressed_xy):
-        dist = (lim[1] - lim[0]) / fig_size * (xy - pressed_xy)
-        return lim[0] - dist, lim[1] - dist
+def geostring_to_coords(geostring):
+    coords = list(map(float, geostring.split()))
+    coords_2180 = [(coords[i], coords[i + 1]) for i in range(0, len(coords), 2)]
+    coords_4326 = [transformer.transform(x, y) for x, y in coords_2180]
+    return coords_4326
 
-    def mouse_button(self, event):
-        if event.button == plt.MouseButton.LEFT:
-            self.pressed = (event.x, event.y)
-            self.xlim = self.ax.get_xlim()
-            self.ylim = self.ax.get_ylim()
-        if event.dblclick:  # Sprawdzanie podwójnego kliknięcia
-            for artist in reversed(self.ax.patches):  # Przeszukiwanie obiektów na osi
-                if artist.contains_point((event.x, event.y)):
-                    label = artist.get_label()
-                    obiekt = self.narysowane[label]
-                    self.obiekt_window(obiekt)
-                    break
-    
-    def obiekt_window(self, obiekt):
-        if len(self.open_windows) > 0:
-            for window in self.open_windows:
-                window.destroy()
+def format_udzialy(udzialy):
+    if udzialy:
+        udzialy = sorted(
+            udzialy,
+            key=lambda udzial: float(udzial.licznikUlamkaOkreslajacegoWartoscUdzialu) / float(udzial.mianownikUlamkaOkreslajacegoWartoscUdzialu),
+            reverse=True
+        )
+        tabelka_html = """
+        <table border="1">
+            <thead>
+                <tr>
+                    <th>udział</th>
+                    <th>rodzaj podmiotu</th>
+                    <th>podmiot</th>
+                </tr>
+            </thead>
+            <tbody>
+        """
+        for udzial in udzialy:
+            if type(udzial.podmiotUdzialuWlasnosci) == Instytucja:
+                rodzaj_podmiotu = "instytucja"
+                podmiot = udzial.podmiotUdzialuWlasnosci.nazwaPelna
+            elif type(udzial.podmiotUdzialuWlasnosci) == OsobaFizyczna:
+                rodzaj_podmiotu = "osoba"
+                podmiot = udzial.podmiotUdzialuWlasnosci
+            elif type(udzial.podmiotUdzialuWlasnosci) == Malzenstwo:
+                rodzaj_podmiotu = "małżeństwo"
+                podmiot = udzial.podmiotUdzialuWlasnosci
+            tabelka_html += f"""
+                <tr>
+                    <td>{udzial.licznikUlamkaOkreslajacegoWartoscUdzialu}/{udzial.mianownikUlamkaOkreslajacegoWartoscUdzialu}</td>
+                    <td>{rodzaj_podmiotu}</td>
+                    <td>{podmiot}</td>
+                </tr>
+            """
+        tabelka_html += """
+            </tbody>
+        </table>
+        """
+        return tabelka_html
+    return "brak informacji"
 
-        window = ctk.CTkToplevel(self.root)
-        window.title(obiekt.podpis)
+def format_budynki(budynki):
+    if budynki:
+        tabelka_html = """
+        <table border="1">
+            <thead>
+                <tr>
+                    <th>nr budynku</th>
+                    <th>rodzaj wg KST</th>
+                    <th>powierzchnia zabudowy</th>
+                </tr>
+            </thead>
+            <tbody>
+        """
+        for budynek in budynki:
+            tabelka_html += f"""
+                <tr>
+                    <td>{budynek.nrBudynku}</td>
+                    <td>{budynek.rodzajWgKST}</td>
+                    <td>{budynek.powZabudowy} m<sup>2</sup></td>
+                </tr>
+            """
+        tabelka_html += """
+            </tbody>
+        </table>
+        """
+        return tabelka_html
+    return "brak"
 
-        self.open_windows.append(window)
+def format_klasouzytki(klasouzytki):
+    tabelka_html = """
+    <table border="1">
+        <thead>
+            <tr>
+                <th>OFU</th>
+                <th>OZU</th>
+                <th>OZK</th>
+                <th>powierzchnia</th>
+            </tr>
+        </thead>
+        <tbody>
+    """
+    for klasouzytek in klasouzytki:
+        tabelka_html += f"""
+            <tr>
+                <td>{klasouzytek.OFU}</td>
+                <td>{klasouzytek.OZU}</td>
+                <td>{klasouzytek.OZK}</td>
+                <td>{klasouzytek.powierzchnia} ha</td>
+            </tr>
+        """
+    tabelka_html += """
+        </tbody>
+    </table>
+    """
+    return tabelka_html
 
-        if isinstance(obiekt, DzialkaEwidencyjna):
-            label = ctk.CTkLabel(window, text=f"Id działki: {obiekt.idDzialki}", font=self.main.FONT)
-            label.pack(padx=10, pady=10)
-            label = ctk.CTkLabel(window, text=f"Numer KW: {obiekt.numerKW}", font=self.main.FONT)
-            label.pack(padx=10, pady=10)
-            label = ctk.CTkLabel(window, text=f"Pole ewidencyjne: {obiekt.poleEwidencyjne} ha", font=self.main.FONT)
-            label.pack(padx=10, pady=10)
-            #udzialy i budynki
-        elif isinstance(obiekt, Budynek):
-            label = ctk.CTkLabel(window, text=f"Rodzaj wg KST: {obiekt.rodzajWgKST}", font=self.main.FONT)
-            label.pack(padx=10, pady=10)
-            label = ctk.CTkLabel(window, text=f"Liczba kondygnacji nadziemnych: {obiekt.liczbaKondygnacjiNadziemnych}", font=self.main.FONT)
-            label.pack(padx=10, pady=10)
-            label = ctk.CTkLabel(window, text=f"Liczba kondygnacji podziemnych: {obiekt.liczbaKondygnacjiPodziemnych}", font=self.main.FONT)
-            label.pack(padx=10, pady=10)
-            label = ctk.CTkLabel(window, text=f"Powierzchnia zabudowy: {obiekt.powZabudowy} m^2", font=self.main.FONT)
-            label.pack(padx=10, pady=10)
-            label = ctk.CTkLabel(window, text=f"Działka: {obiekt.dzialka.idDzialki}", font=self.main.FONT)
-            label.pack(padx=10, pady=10)
-        elif isinstance(obiekt, Kontur):
-            label = ctk.CTkLabel(window, text=f"OFU: {obiekt.OFU}", font=self.main.FONT)
-            label.pack(padx=10, pady=10)
+grunty_dict = {
+    'R': 'grunt orny',
+    'Ł': 'łąka trwała',
+    'Ps': 'pastwisko trwałe',
+    'S': 'sad',
+    'Br': 'grunt rolny zabudowany',
+    'Lzr': 'grunt zadrzewiony i zakrzewiony na użytku rolnych',
+    'Wsr': 'grunt pod stawem',
+    'W': 'grunt pod rowem',
+    'N': 'nieużytek',
+    'Ls': 'las',
+    'Lz': 'grunt zadrzewiony i zakrzewiony',
+    'B': 'teren mieszkaniowy',
+    'Ba': 'teren przemysłowy',
+    'Bi': 'inny teren zabudowany',
+    'Bp': 'zurbanizowany teren niezabudowany lub w trakcie zabudowy',
+    'Bz': 'teren rekreacyjno-wypoczynkowy',
+    'K': 'użytek kopalny',
+    'dr': 'droga',
+    'Tk': 'teren kolejowy',
+    'Ti': 'inny teren komunikacyjny',
+    'Tp': 'grunt przeznaczony pod budowę drogi publicznej lub linii kolejowej',
+    'Wm': 'grunt pod morskimi wodami wewnętrznymi',
+    'Wp': 'grunt pod wodami powierzchniowymi płynącymi',
+    'Ws': 'grunt pod wodami powierzchniowymi stojącymi',
+    'Tr': 'teren różny'
+}
 
-        window.mainloop()
+wg_kst = {
+    'm': 'mieszkalny',
+    'g': 'produkcyjny/usługowy/gospodarczy',
+    't': 'transportu/łączności',
+    'k': 'oświaty/nauki/kultury/sportu',
+    'z': 'szpitala/opieki zdrowotnej',
+    'b': 'biurowy',
+    'h': 'handlowo-usługowy',
+    'p': 'przemysłowy',
+    's': 'magazynowy/silos',
+    'i': 'niemieszkalny'
+}
 
-    def get_lim(self, lim, data, factor):
-        l_dist = (data - lim[0]) * factor
-        r_dist = (lim[1] - data) * factor
-        return data - l_dist, data + r_dist
 
-    def motion(self, event):
-        try:
-            if event.button == plt.MouseButton.LEFT:
-                fig_size = self.fig.get_size_inches() * self.fig.dpi
-                self.ax.set_xlim(self.get_dist(self.xlim, fig_size[0], event.x, self.pressed[0]))
-                self.ax.set_ylim(self.get_dist(self.ylim, fig_size[1], event.y, self.pressed[1]))
-                self.canvas.draw()
-        except TypeError:
-            pass
-    
-    def draw_polygon(self, obiekt):
-        koordynaty = list(map(float, obiekt.geometria.split()))
-        y = koordynaty[::2]
-        x = koordynaty[1::2]
-        polygon = Polygon(list(zip(x, y)), closed=True, color=obiekt.color, alpha=0.5, picker=True, label=obiekt.podpis, fill=False)
-        self.ax.add_patch(polygon)
-
-        if isinstance(obiekt, Budynek):
-            x = sum(x) / len(x) - 5
-        else:
-            x = sum(x) / len(x) - 15
-
-        y = sum(y) / len(y)
-        self.ax.text(x, y, obiekt.podpis, fontsize=8, color=obiekt.color)
-        self.ax.relim()
-        self.ax.autoscale_view()
-        self.canvas.draw()
-        self.narysowane[obiekt.podpis] = obiekt
-        obiekt.polygon = polygon
-    
-    def add_objects(self, dzialki, budynki, kontury):
-        self.dzialki = dzialki
-        self.budynki = budynki
-        self.kontury = kontury
-    
-    def change_visibility(self, obiekt):
-        if obiekt.narysowany:
-            obiekt.narysowany = False
-            self.narysowane.pop(obiekt.podpis)
-        else:
-            obiekt.narysowany = True
-            self.narysowane[obiekt.podpis] = obiekt
-        self.xlim = self.ax.get_xlim()
-        self.ylim = self.ax.get_ylim()
-        self.redraw()
-
-    def redraw(self):
-        self.ax.clear()
-        self.reset()
-        for obiekt in self.narysowane.values():
-            koordynaty = list(map(float, obiekt.geometria.split()))
-            x = koordynaty[::2]
-            y = koordynaty[1::2]
-            polygon = Polygon(list(zip(x, y)), closed=True, color=obiekt.color, alpha=0.5, picker=True, label=obiekt.podpis, fill=False)
-            self.ax.add_patch(polygon)
-
-            if isinstance(obiekt, Budynek):
-                x = sum(x) / len(x) - 5
-            else:
-                x = sum(x) / len(x) - 15
-            y = sum(y) / len(y)
-            self.ax.text(x, y, obiekt.podpis, fontsize=8, color=obiekt.color)
-            self.narysowane[obiekt.podpis] = obiekt
-            self.ax.set_xlim(self.xlim)
-            self.ax.set_ylim(self.ylim)
-            self.canvas.draw()
-            obiekt.polygon = polygon
+def popup_jednostka_ewidencyjna(jednostka):
+    popup = f"""
+    <h3><b>{jednostka.nazwaWlasna}</b></h3>
+    <p><b>id jednostki</b>: {jednostka.idJednostkiEwid}</p>
+"""
+    return popup 
 
 class MainWindow(ctk.CTk):
     def __init__(self):
@@ -184,121 +168,179 @@ class MainWindow(ctk.CTk):
         self.geometry("1500x900")
         self.title("GML Reader")
         self.FONT = ("Helvetica", 13, "bold")
-        self.canvas = None
         self.dzialki = None
         self.budynki = None
-        self.kontury = None
-        
+        self.kontury_klasyfikacyjne = None
+        self.kontury_uzytkow = None
+        self.jednostki_ewidencyjne = None
+        self.obreby_ewidencyjne = None
+        self.map = None
+        self.out_map = "projekt-2-gml/web/map.html"
+
         choose_file_button = ctk.CTkButton(self, text="Wczytaj plik GML", command=self.load_gml, font=self.FONT)
         choose_file_button.pack(padx=10, pady=10, fill='x')
 
         frame = ctk.CTkFrame(self)
         frame.pack(padx=10, pady=10, fill="both", expand=True)
-
-        self.obiekty_frame = ctk.CTkFrame(frame)
-        self.obiekty_frame.pack(side=ctk.LEFT, padx=10, pady=10, fill="both", expand=True)
-
-        self.obiekty_frame_label = ctk.CTkLabel(self.obiekty_frame, text="OBIEKTY", font=self.FONT)
-        self.obiekty_frame_label.pack()
-
-        self.dzialki_frame = ctk.CTkFrame(self.obiekty_frame)
-        self.dzialki_frame.configure(width=10, height=40)
-
-        self.dzialki_frame_label = ctk.CTkLabel(self.dzialki_frame, text="DZIAŁKI", font=self.FONT)
-        self.dzialki_frame_label.pack(fill="both", expand=True)
-
-        self.canvas_frame = ctk.CTkFrame(frame)
-        self.canvas_frame.pack(side=ctk.LEFT, padx=10, pady=10, fill="both", expand=True)
-
-        self.canvas = Canvas(self.canvas_frame, self)
-
-        self.budynki_frame = ctk.CTkFrame(self.obiekty_frame)
-        self.budynki_frame.configure(width=10, height=40)
-
-        self.budynki_frame_label = ctk.CTkLabel(self.budynki_frame, text="BUDYNKI", font=self.FONT)
-        self.budynki_frame_label.pack(fill="both", expand=True)
-
-        self.kontury_frame = ctk.CTkFrame(self.obiekty_frame)
-        self.kontury_frame.configure(width=10, height=40)
-
-        self.kontury_frame_label = ctk.CTkLabel(self.kontury_frame, text="KONTURY", font=self.FONT)
-        self.kontury_frame_label.pack(fill="both", expand=True)
         
         self.mainloop()
 
     def load_gml(self):
         file = filedialog.askopenfilename(title="Wybierz plik GML", filetypes=[("Pliki GML", "*.gml, *.xml"), ("Wszystkie pliki", "*.*")])
         if file:
-            dzialki, budynki, kontury = read_gml(file)
-            self.canvas.narysowane = {}
-            self.canvas.add_objects(dzialki, budynki, kontury)
-            self.add_objects(dzialki, budynki, kontury)
-            self.add_objects_to_list(dzialki, budynki, kontury)
+            self.dzialki, self.budynki, self.kontury_klasyfikacyjne, self.kontury_uzytkow, self.jednostki_ewidencyjne, self.obreby_ewidencyjne = read_gml(file)
+            self.create_map()
         else:
             return
-
-    def add_objects_to_list(self, dzialki, budynki, kontury):
-        widgets = [self.dzialki_frame, self.kontury_frame, self.budynki_frame]
-        for widget in widgets:
-            for w in widget.winfo_children():
-                w.destroy()
-        
-        if dzialki:
-            self.dzialki_frame.pack_propagate(True)
-            self.dzialki_frame.pack(side=ctk.TOP, padx=10, fill='both')
-        if budynki:
-            self.budynki_frame.pack_propagate(True)
-            self.budynki_frame.pack(side=ctk.TOP, padx=10, pady=10, fill='both')
-        if kontury:
-            self.kontury_frame.pack_propagate(True)
-            self.kontury_frame.pack(side=ctk.TOP, padx=10, pady=10, fill='x')
-
-        for i, dzialka in enumerate(dzialki.values()):
-            self.canvas.draw_polygon(dzialka)
-            dzialka.narysowany = True
-            var = ctk.BooleanVar(value=True)
-
-            checkbox = ctk.CTkCheckBox(
-                self.dzialki_frame,
-                text=f"{dzialka.podpis}",
-                command=lambda dzialka=dzialka: self.canvas.change_visibility(dzialka),
-                variable=var
-            )
-            row = i // 6 
-            col = i % 6
-            checkbox.grid(row=row, column=col, padx=5, pady=5, sticky="w")
-
-        for i, kontur in enumerate(kontury):
-            # self.canvas.draw_polygon(kontur)
-            kontur.narysowany = True
-            var = ctk.BooleanVar(value=True)
-
-            checkbox = ctk.CTkCheckBox(
-                self.kontury_frame,
-                text=f"{kontur.podpis}",
-                command=lambda kontur=kontur: self.canvas.change_visibility(kontur),
-                variable=var
-            )
-            row = i // 6 
-            col = i % 6
-            checkbox.grid(row=row, column=col, padx=5, pady=5, sticky="w")
-
-        for i, budynek in enumerate(budynki):
-            self.canvas.draw_polygon(budynek)
-            budynek.narysowany = True
-            var = ctk.BooleanVar(value=True)
-
-            checkbox = ctk.CTkCheckBox(
-                self.budynki_frame,
-                text=f"{budynek.nrBudynku}",
-                command=lambda budynek=budynek: self.canvas.change_visibility(budynek),
-                variable=var
-            )
-            row = i // 6 
-            col = i % 6
-            checkbox.grid(row=row, column=col, padx=5, pady=5, sticky="w")
     
-    def add_objects(self, dzialki, budynki, kontury):
-        self.dzialki = dzialki
-        self.budynki = budynki
-        self.kontury = kontury
+    def popup_dzialka(self, dzialka):
+        popup = f"""
+        <h3><b>{dzialka.nrDzialki}</b></h3>
+        <p><b>działka</b>: {dzialka.idDzialki}</p>
+        <p><b>obręb ewidencyjny</b>: {dzialka.obreb_id} ({self.obreby_ewidencyjne[dzialka.obreb_id].nazwaWlasna})</p>
+        <p><b>jednostka ewidencyjna</b>: {self.obreby_ewidencyjne[dzialka.obreb_id].jednostkaEwid_id} ({self.jednostki_ewidencyjne[self.obreby_ewidencyjne[dzialka.obreb_id].jednostkaEwid_id].nazwaWlasna})</p>
+        <p><b>numer KW</b>: {dzialka.numerKW}</p>
+        <p><b>pole ewidencyjne</b>: {dzialka.poleEwidencyjne} ha</p>
+        <p><b>klasoużytki</b>: {format_klasouzytki(dzialka.klasouzytki)}</p>
+        <p><b>udziały</b>: {format_udzialy(dzialka.udzialy)}</p>
+        <p><b>budynki</b>: {format_budynki(dzialka.budynki)}</p>
+    """ 
+        return popup
+
+    def popup_obreb_ewidencyjny(self, obreb):
+        popup = f"""
+        <h3><b>{obreb.nazwaWlasna}</b></h3>
+        <p><b>obręb</b>: {obreb.idObrebu}</p>
+        <p><b>jednostka </b>: {obreb.jednostkaEwid_id} ({self.jednostki_ewidencyjne[obreb.jednostkaEwid_id].nazwaWlasna})</p>
+    """
+        return popup
+
+    def popup_kontur_uzytku(self, kontur):
+        popup = f"""
+        <h3> <b>{kontur.OFU}</b></h3>
+        <p><b>użytek</b>: {kontur.idKonturu}</p>
+        <p><b>obręb ewidencyjny</b>: {kontur.obreb_id} ({self.obreby_ewidencyjne[kontur.obreb_id].nazwaWlasna})</p>
+        <p><b>jednostka ewidencyjna</b>: {self.obreby_ewidencyjne[kontur.obreb_id].jednostkaEwid_id} ({self.jednostki_ewidencyjne[self.obreby_ewidencyjne[kontur.obreb_id].jednostkaEwid_id].nazwaWlasna})</p>
+        <p><b>OFU</b>: {kontur.OFU} ({grunty_dict[kontur.OFU]})</p>
+    """
+        return popup
+
+    def popup_kontur_klasyfikacyjny(self, kontur):
+        popup = f"""
+        <h3><b>{kontur.OZU}{kontur.OZK}</b></h3>
+        <p><b>kontur</b>: {kontur.idKonturu}</p>
+        <p><b>obręb ewidencyjny</b>: {kontur.obreb_id} ({self.obreby_ewidencyjne[kontur.obreb_id].nazwaWlasna})</p>
+        <p><b>jednostka ewidencyjna</b>: {self.obreby_ewidencyjne[kontur.obreb_id].jednostkaEwid_id} ({self.jednostki_ewidencyjne[self.obreby_ewidencyjne[kontur.obreb_id].jednostkaEwid_id].nazwaWlasna})</p>
+        <p><b>OZU</b>: {kontur.OZU} ({grunty_dict[kontur.OZU]})</p>
+        <p><b>OZK</b>: {kontur.OZK}</p>
+    """
+        return popup
+
+    def popup_budynek(self, budynek):
+        popup = f"""
+        <h3><b>budynek {wg_kst[budynek.rodzajWgKST]}</b></h3>
+        <p><b>budynek</b>: {budynek.idBudynku}</p>
+        <p><b>działka</b>: {budynek.dzialka.idDzialki}</p>
+        <p><b>obręb ewidencyjny</b>: {budynek.dzialka.obreb_id} ({self.obreby_ewidencyjne[budynek.dzialka.obreb_id].nazwaWlasna})</p>
+        <p><b>jednostka ewidencyjna</b>: {self.obreby_ewidencyjne[budynek.dzialka.obreb_id].jednostkaEwid_id} ({self.jednostki_ewidencyjne[self.obreby_ewidencyjne[budynek.dzialka.obreb_id].jednostkaEwid_id].nazwaWlasna})</p>
+        <p><b>rodzaj wg KST</b>: {budynek.rodzajWgKST}</p>
+        <p><b>liczba kondygnacji nadziemnych</b>: {budynek.liczbaKondygnacjiNadziemnych}</p>
+        <p><b>liczba kondygnacji podziemnych</b>: {budynek.liczbaKondygnacjiPodziemnych}</p>
+        <p><b>powierzchnia zabudowy</b>: {budynek.powZabudowy} m<sup>2</sup></p>
+    """
+        return popup
+
+    def create_map(self):
+        self.map = folium.Map(location=[52.26548704146309, 20.552917654453303], zoom_start=17, tiles="CartoDB Positron")
+        css_link = r'<link rel="stylesheet" type="text/css" href="C:\Users\adria\Desktop\STUDIA_FOLDERY\zinformatyzowane-systemy-katastralne\projekt-2-gml\web\static\css\wspolny.css"/>'
+        folium.Element(css_link).add_to(self.map.get_root().html)
+        
+        jednostki_ewidencyjne_fg = folium.FeatureGroup(name="jednostki ewidencyjne")
+        for jednostka in self.jednostki_ewidencyjne.values():
+            coords = geostring_to_coords(jednostka.geometria)
+            folium.Polygon(
+                locations=coords,
+                color='gray',
+                fill=False,
+                weight=1,
+                fill_color='red',
+                fill_opacity=0,
+                popup=popup_jednostka_ewidencyjna(jednostka)
+            ).add_to(jednostki_ewidencyjne_fg)
+        jednostki_ewidencyjne_fg.add_to(self.map)
+
+        obreby_ewidencyjne_fg = folium.FeatureGroup(name="obręby ewidencyjne")
+        for obreb in self.obreby_ewidencyjne.values():
+            coords = geostring_to_coords(obreb.geometria)
+            folium.Polygon(
+                locations=coords,
+                color='black',
+                fill=False,
+                weight=1,
+                fill_color='red',
+                fill_opacity=0,
+                popup=self.popup_obreb_ewidencyjny(obreb)
+            ).add_to(obreby_ewidencyjne_fg)
+        obreby_ewidencyjne_fg.add_to(self.map)
+
+        kontury_uzytkow_fg = folium.FeatureGroup(name="kontury użytków")
+        for kontur in self.kontury_uzytkow:
+            coords = geostring_to_coords(kontur.geometria)
+            folium.Polygon(
+                locations=coords,
+                color='#90ee90',
+                fill=False,
+                weight=1,
+                fill_color='green',
+                fill_opacity=0,
+                popup=self.popup_kontur_uzytku(kontur)
+            ).add_to(kontury_uzytkow_fg)
+        kontury_uzytkow_fg.add_to(self.map)
+
+        kontury_klasyfikacyjne_fg = folium.FeatureGroup(name="kontury klasyfikacyjne")
+        for kontur in self.kontury_klasyfikacyjne:
+            coords = geostring_to_coords(kontur.geometria)
+            folium.Polygon(
+                locations=coords,
+                color='#adfc33',
+                fill=False,
+                weight=1,
+                fill_color='green',
+                fill_opacity=0,
+                popup=self.popup_kontur_klasyfikacyjny(kontur)
+            ).add_to(kontury_klasyfikacyjne_fg)
+        kontury_klasyfikacyjne_fg.add_to(self.map)
+
+        dzialki_fg = folium.FeatureGroup(name="działki")
+        for dzialka in self.dzialki.values():
+            folium.Polygon(
+                locations=geostring_to_coords(dzialka.geometria),
+                color='black',
+                fill=False,
+                fill_color='blue',
+                fill_opacity=0,
+                weight=2,
+                popup=self.popup_dzialka(dzialka)
+            ).add_to(dzialki_fg)
+        dzialki_fg.add_to(self.map)
+
+        budynki_fg = folium.FeatureGroup(name="budynki")
+        for budynek in self.budynki:
+            coords = geostring_to_coords(budynek.geometria)
+            poly = folium.Polygon(
+                locations=coords,
+                color='black',
+                fill=False,
+                fill_color='black',
+                fill_opacity=0,
+                weight=3,
+                popup=self.popup_budynek(budynek)
+            ).add_to(budynki_fg)
+        budynki_fg.add_to(self.map)
+
+        folium.LayerControl().add_to(self.map)
+        self.map.save(self.out_map)
+            
+
+
+

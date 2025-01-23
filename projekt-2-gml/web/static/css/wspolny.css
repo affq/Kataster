@@ -1,0 +1,212 @@
+:root{
+    --P1_2: red;
+    --P3: rgb(255, 166, 0);
+    --P4: yellow;
+    --P5: rgb(153, 0, 191);
+    --r: 30px;
+}
+
+.cluster-icon{
+    display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-content: center;
+    justify-content: center;
+    align-items: center;
+}
+
+.awarieRow{
+    display: flex;
+}
+
+.awarieRow > div{
+    border-radius: 50%;
+    width: var(--r);
+    height: var(--r);
+    border: 1px solid black;
+    text-align:center;
+    line-height: var(--r);
+    font-weight: bold;
+}
+
+.marker-icon{
+    border-radius: 50%;
+    text-align:center;
+    line-height: var(--r);
+    font-weight: bold;
+    border: 1px solid black;
+    width: var(--r) !important;
+    height: var(--r) !important;
+    display: inline-block;
+}
+
+.legend{
+    bottom: 0;
+    margin: 0 !important;
+    padding: 20px;
+    font-size: 15px;
+    font-weight: bold;
+    line-height: 50px;
+    left: 10px;
+    width: 100px;
+}
+
+.legend > span{
+    position: relative;
+    bottom: 10px;
+    left: 10px;
+}
+
+.refresh-info{
+    padding: 0 30px 30px 30px;
+    margin: 0 !important;
+    font-weight: bold;
+    font-size: 15px;
+}
+
+.refresh-info > h3{
+    text-align: center;
+}
+
+.leaflet-control-layers {
+    background-color: rgba(255, 255, 255, 0.83);
+    border-radius: 5px;
+    margin: 0 !important;
+}
+
+.leaflet-control-layers-list {
+    padding: 10px;
+}
+
+.leaflet-control-layers label {
+    font-weight: bold;
+    color: #333;
+}
+
+.leaflet-control-layers input[type="radio"],
+.leaflet-control-layers input[type="checkbox"] {
+    margin-right: 5px;
+}
+
+.leaflet-popup-content-wrapper {
+    background-color: #ffffff; 
+    border: 2px solid #ccc;
+    border-radius: 20px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    padding: 10px;
+    width: 35rem;
+}
+
+
+.leaflet-popup-content {
+    font: 1.3em Calibri, sans-serif;
+}
+
+.leaflet-popup-content h3 {
+    text-align: center;
+    color: #333;
+}
+
+.leaflet-popup-close-button{
+    display: none;
+}
+
+.popUp{
+    font: 1.2em Calibri, sans-serif;
+}
+
+.popUp > h3{
+    text-align: center;
+}
+
+.popUp > span{
+    font-weight: bold;
+}
+
+.gicon{
+    margin-left: 10px;
+    width: 15px;
+}
+
+.leaflet-tooltip{
+    background: none;
+    border: none;
+    box-shadow: none;
+    font-size: 11px;
+    letter-spacing: 2px;
+}
+
+.leaflet-tooltip-bottom:before, .leaflet-tooltip-top:before{
+    display: none;
+}
+
+path{
+    outline: none;
+}
+
+.refresh-info button{
+    margin-left: 20px;
+}
+
+.version-switch p{
+    margin: 5px;
+}
+
+.marker-icon{
+    border-radius: 50%;
+    text-align:center;
+    line-height: var(--r);
+    font-weight: bold;
+    border: 1px solid black;
+    width: var(--r) !important;
+    height: var(--r) !important;
+    display: inline-block;
+}
+
+.leaflet-control-layers-list {
+    padding: 10px;
+}
+
+.leaflet-control-layers label {
+    font-weight: bold;
+    color: #333;
+}
+
+.leaflet-control-layers input[type="radio"],
+.leaflet-control-layers input[type="checkbox"] {
+    margin-right: 5px;
+}
+
+.leaflet-tooltip{
+    background: none;
+    border: none;
+    box-shadow: none;
+    font-size: 1rem;
+    color:black;
+    font-weight: 600;
+    letter-spacing: 2px;
+}
+
+.leaflet-tooltip-bottom:before, .leaflet-tooltip-top:before{
+    display: none;
+}
+
+path{
+    outline: none;
+}
+
+table {
+    border-collapse: collapse;
+    width: 100%;
+}
+th, td {
+    border: 1px solid black;
+    padding: 8px;
+    text-align: left;
+}
+tr {
+    border-bottom: 1px solid black;
+}
+tr:last-child {
+    border-bottom: none;
+}

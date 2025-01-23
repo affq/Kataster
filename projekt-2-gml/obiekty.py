@@ -17,7 +17,7 @@ class Obiekt:
         self.polygon = None
 
 class DzialkaEwidencyjna(Obiekt):
-    def __init__(self, idDzialki, geometria, numerKW, poleEwidencyjne):
+    def __init__(self, idDzialki, geometria, numerKW, poleEwidencyjne, obreb_id):
         self.nrDzialki = idDzialki.split('.')[-1]       
         super().__init__('blue', self.nrDzialki, geometria)
         self.idDzialki = idDzialki
@@ -26,6 +26,7 @@ class DzialkaEwidencyjna(Obiekt):
         self.klasouzytki = []
         self.udzialy = []
         self.budynki = []
+        self.obreb_id = obreb_id
 
     def add_udzial(self, udzial):
         self.udzialy.append(udzial)
@@ -53,15 +54,30 @@ class Budynek(Obiekt):
     def __str__(self):
         return f'{self.idBudynku=}, {self.powZabudowy=} '
 
-class Kontur(Obiekt):
-    def __init__(self, idUzytku, geometria, OFU):
-        self.nrUzytku = idUzytku.split('.')[-1]
-        super().__init__('green', self.nrUzytku, geometria)
-        self.idUzytku = idUzytku
-        self.OFU = OFU
+class KonturKlasyfikacyjny(Obiekt):
+    def __init__(self, idKonturu, geometria, OZU, OZK, obreb_id):
+        self.nrKonturu = idKonturu.split('.')[-1]
+        super().__init__('green', self.nrKonturu, geometria)
+        self.idKonturu = idKonturu
+        self.OZU = OZU
+        self.OZK = OZK
+        self.obreb_id = obreb_id
 
     def __str__(self):
         return f'{self.idUzytku=}, {self.geometria=}'
+
+class KonturUzytkuGruntowego(Obiekt):
+    def __init__(self, idKonturu, geometria, OFU, obreb_id):
+        self.idKonturu = idKonturu
+        self.nrKonturu = idKonturu.split('.')[-1]
+        super().__init__('green', self.nrKonturu, geometria)
+        self.OFU = OFU
+        self.geometria = geometria
+        self.obreb_id = obreb_id
+
+    def __str__(self):
+        return f'{self.idKonturu=}, {self.geometria=}'
+
 
 class UdzialWeWlasnosci:
     def __init__(self, rodzajPrawa, licznikUlamkaOkreslajacegoWartoscUdzialu, mianownikUlamkaOkreslajacegoWartoscUdzialu, podmiotUdzialuWlasnosci, przedmiotUdzialuWlasnosci):
@@ -88,7 +104,7 @@ class Malzenstwo:
         self.osobaFizyczna2 = osobaFizyczna2
 
     def __str__(self):
-        return f'{self.osobaFizyczna1.pierwszeImie} {self.osobaFizyczna1.pierwszyCzlonNazwiska}, {self.osobaFizyczna1.pesel} oraz {self.osobaFizyczna2.pierwszeImie} {self.osobaFizyczna2.pierwszyCzlonNazwiska}, {self.osobaFizyczna2.pesel}'
+        return f'{self.osobaFizyczna1.pierwszeImie} {self.osobaFizyczna1.pierwszyCzlonNazwiska} ({self.osobaFizyczna1.pesel}) oraz {self.osobaFizyczna2.pierwszeImie} {self.osobaFizyczna2.pierwszyCzlonNazwiska} ({self.osobaFizyczna2.pesel})'
 
 class Adres:
     def __init__(self, miejscowosc, kodPocztowy, ulica, numerPorzadkowy):
@@ -110,4 +126,23 @@ class OsobaFizyczna:
         self.adresOsobyFizycznej = adresOsobyFizycznej
 
     def __str__(self):
-        return f'{self.pierwszeImie} {self.pierwszyCzlonNazwiska}, {self.pesel}'
+        return f'{self.pierwszeImie} {self.pierwszyCzlonNazwiska}({self.pesel})'
+
+class JednostkaEwidencyjna:
+    def __init__(self, idJednostkiEwid, geometria, nazwaWlasna):
+        self.idJednostkiEwid = idJednostkiEwid
+        self.geometria = geometria
+        self.nazwaWlasna = nazwaWlasna
+
+    def __str__(self):
+        return f'{self.nazwaWlasna}'
+
+class ObrebEwidencyjny:
+    def __init__(self, idObrebu, geometria, nazwaWlasna, jednostkaEwid_id):
+        self.idObrebu = idObrebu
+        self.geometria = geometria
+        self.nazwaWlasna = nazwaWlasna
+        self.jednostkaEwid_id = jednostkaEwid_id
+        
+    def __str__(self):
+        return f'{self.nazwaWlasna}'

@@ -1,16 +1,16 @@
-
 from bs4 import BeautifulSoup
 from obiekty import *
 
-def stworz_dzialke(dzialka):
+def stworz_dzialke(dzialka, soup):
     idDzialki = dzialka.find('egb:idDzialki').text
     geometria = dzialka.find('egb:geometria').text
     numerKW_element = dzialka.find('egb:numerKW')
     numerKW = numerKW_element.text if numerKW_element is not None else None
-
     poleEwidencyjne = dzialka.find('egb:poleEwidencyjne').text
+    obreb_link = dzialka.find('egb:lokalizacjaDzialki').get('xlink:href')
+    obreb_id = soup.find('egb:EGB_ObrebEwidencyjny', {'gml:id': obreb_link}).find('egb:idObrebu').text
 
-    return DzialkaEwidencyjna(idDzialki, geometria, numerKW, poleEwidencyjne)
+    return DzialkaEwidencyjna(idDzialki, geometria, numerKW, poleEwidencyjne, obreb_id)
 
 def stworz_klasouzytek(klasouzytek):
     OFU = klasouzytek.find('egb:OFU').text 
@@ -35,12 +35,24 @@ def stworz_budynek(budynek, dzialka):
 
     return Budynek(idBudynku, geometria, rodzajWgKST, liczbaKondygnacjiNadziemnych, liczbaKondygnacjiPodziemnych, powZabudowy, dzialka)
 
-def stworz_kontur(kontur):
+def stworz_kontur_klasyfikacyjny(kontur, soup):
+    idKonturu = kontur.find('egb:idKonturu').text
+    geometria = kontur.find('egb:geometria').text
+    OZU = kontur.find('egb:OZU').text
+    OZK = kontur.find('egb:OZK').text
+    obreb_link = kontur.find('egb:lokalizacjaKonturu').get('xlink:href')
+    obreb_id = soup.find('egb:EGB_ObrebEwidencyjny', {'gml:id': obreb_link}).find('egb:idObrebu').text
+
+    return KonturKlasyfikacyjny(idKonturu, geometria, OZU, OZK, obreb_id)
+
+def stworz_kontur_uzytku(kontur, soup):
     idUzytku = kontur.find('egb:idUzytku').text
     geometria = kontur.find('egb:geometria').text
     OFU = kontur.find('egb:OFU').text
+    obreb_link = kontur.find('egb:lokalizacjaUzytku').get('xlink:href')
+    obreb_id = soup.find('egb:EGB_ObrebEwidencyjny', {'gml:id': obreb_link}).find('egb:idObrebu').text
 
-    return Kontur(idUzytku, geometria, OFU)
+    return KonturUzytkuGruntowego(idUzytku, geometria, OFU, obreb_id)
 
 def stworz_udzial(udzial, podmiot, przedmiot):
     rodzajPrawa = udzial.find('egb:rodzajPrawa').text
@@ -113,21 +125,49 @@ def stworz_podmiot(podmiot, soup):
 
         return Malzenstwo(osobaFizyczna2, osobaFizyczna3)
 
+def stworz_jednostke_ewid(jednostka):
+    idJednostkiEwid = jednostka.find('egb:idJednostkiEwid').text
+    geometria = jednostka.find('egb:geometria').text
+    nazwaWlasna = jednostka.find('egb:nazwaWlasna').text
+
+    return JednostkaEwidencyjna(idJednostkiEwid, geometria, nazwaWlasna)
+
+def stworz_obreb_ewid(obreb, soup):
+    idObrebu = obreb.find('egb:idObrebu').text
+    geometria = obreb.find('egb:geometria').text
+    nazwaWlasna = obreb.find('egb:nazwaWlasna').text
+    jednostkaEwid_link = obreb.find('egb:lokalizacjaObrebu').get('xlink:href')
+    jednostkaEwid = soup.find('egb:EGB_JednostkaEwidencyjna', {'gml:id': jednostkaEwid_link})
+    jednostkaEwid_id = jednostkaEwid.find('egb:idJednostkiEwid').text
+
+    return ObrebEwidencyjny(idObrebu, geometria, nazwaWlasna, jednostkaEwid_id)
+
 def read_gml(file):
     with open(file, 'r', encoding='utf-8') as f:
         soup = BeautifulSoup(f, 'xml')
 
     dzialki = {}
     budynki = []
-    kontury = []
+    kontury_klasyfikacyjne = []
+    kontury_uzytku = []
+    jednostki_ewidencyjne = {}
+    obreby_ewidencyjne = {}
+    
+    for jednostka in soup.find_all('egb:EGB_JednostkaEwidencyjna'):
+        obiekt_jednostka = stworz_jednostke_ewid(jednostka)
+        jednostki_ewidencyjne[obiekt_jednostka.idJednostkiEwid] = obiekt_jednostka
+
+    for obreb in soup.find_all('egb:EGB_ObrebEwidencyjny'):
+        obiekt_obreb = stworz_obreb_ewid(obreb, soup)
+        obreby_ewidencyjne[obiekt_obreb.idObrebu] = obiekt_obreb
 
     for dzialka in soup.find_all('egb:EGB_DzialkaEwidencyjna'):
-        obiekt_dzialka = stworz_dzialke(dzialka)
+        obiekt_dzialka = stworz_dzialke(dzialka, soup)
         for klasouzytek in dzialka.find_all('egb:klasouzytek'):
             obiekt_klasouzytek = stworz_klasouzytek(klasouzytek)
             obiekt_dzialka.add_klasouzytek(obiekt_klasouzytek)
         dzialki[obiekt_dzialka.idDzialki] = obiekt_dzialka
-
+    
     for budynek in soup.find_all('egb:EGB_Budynek'):
         dzialka_link = budynek.find('egb:dzialkaZabudowana').get('xlink:href')
         dzialka = soup.find('egb:EGB_DzialkaEwidencyjna', {'gml:id': dzialka_link})
@@ -136,11 +176,15 @@ def read_gml(file):
         obiekt_budynek = stworz_budynek(budynek, dzialka)
         budynki.append(obiekt_budynek)
         dzialki[id_dzialki].add_budynek(obiekt_budynek) if id_dzialki in dzialki else None
+
+    for kontur in soup.find_all('egb:EGB_KonturKlasyfikacyjny'):
+        obiekt_kontur = stworz_kontur_klasyfikacyjny(kontur, soup)
+        kontury_klasyfikacyjne.append(obiekt_kontur)
     
     for kontur in soup.find_all('egb:EGB_KonturUzytkuGruntowego'):
-        obiekt_kontur = stworz_kontur(kontur)
-        kontury.append(obiekt_kontur)
-    
+        obiekt_kontur = stworz_kontur_uzytku(kontur, soup)
+        kontury_uzytku.append(obiekt_kontur)
+
     for udzial in soup.find_all('egb:EGB_UdzialWeWlasnosci'):
         for podmiotUdzialuWlasnosci in udzial.find_all('egb:EGB_Podmiot'):
             for child in podmiotUdzialuWlasnosci.children:
@@ -154,4 +198,4 @@ def read_gml(file):
         obiekt_udzial = stworz_udzial(udzial, podmiot, przedmiot)
         dzialki[id_przedmiotu].add_udzial(obiekt_udzial) if id_przedmiotu in dzialki else None
     
-    return dzialki, budynki, kontury
+    return dzialki, budynki, kontury_klasyfikacyjne, kontury_uzytku, jednostki_ewidencyjne, obreby_ewidencyjne
