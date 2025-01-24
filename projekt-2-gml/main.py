@@ -2,12 +2,6 @@ from stworz_obiekty import *
 import folium
 from pyproj import Transformer
 from shapely.geometry import Polygon
-from PySide6.QtWidgets import (
-    QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget, QFileDialog, QLabel
-)
-from PySide6.QtGui import QFont
-from PySide6.QtCore import Qt
-from PySide6.QtWebEngineWidgets import QWebEngineView
 
 transformer = Transformer.from_proj(2178, 4326)
 
@@ -215,9 +209,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument("gml_file", help="ścieżka do pliku GML")
 args = parser.parse_args()
 
-class MainWindow():
+class GML():
     def __init__(self):
-        self.FONT = QFont("Helvetica", 13, QFont.Bold)
         self.dzialki = None
         self.budynki = None
         self.kontury_klasyfikacyjne = None
@@ -502,8 +495,8 @@ class MainWindow():
         self.map.save(self.out_map)
 
 if __name__ == '__main__':
-    window = MainWindow()
-    window.load_gml(args.gml_file)
+    gml = GML()
+    gml.load_gml(args.gml_file)
 
 
 
