@@ -11,6 +11,8 @@ from PySide6.QtWebEngineWidgets import QWebEngineView
 
 transformer = Transformer.from_proj(2178, 4326)
 
+import webbrowser
+
 def geostring_to_coords(geostring):
     coords = list(map(float, geostring.split()))
     coords_2180 = [(coords[i], coords[i + 1]) for i in range(0, len(coords), 2)]
@@ -207,11 +209,14 @@ KONTUR_KLASYFIKACYJNY_KOLOR = "#adfc33"
 UZYTEK_GRUNTOWY_KOLOR = "#90ee90"
 BUDYNEK_KOLOR = "#000000"
 
-class MainWindow(QMainWindow):
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument("gml_file", help="ścieżka do pliku GML")
+args = parser.parse_args()
+
+class MainWindow():
     def __init__(self):
-        super().__init__()
-        self.resize(1500, 900)
-        self.setWindowTitle("GML Reader")
         self.FONT = QFont("Helvetica", 13, QFont.Bold)
         self.dzialki = None
         self.budynki = None
@@ -225,26 +230,11 @@ class MainWindow(QMainWindow):
         self.map = None
         self.out_map = "projekt-2-gml/web/map.html"
 
-        central_widget = QWidget(self)
-        self.setCentralWidget(central_widget)
-        layout = QVBoxLayout(central_widget)
-
-        choose_file_button = QPushButton("Wczytaj plik GML")
-        choose_file_button.setFont(self.FONT)
-        choose_file_button.clicked.connect(self.load_gml)
-        layout.addWidget(choose_file_button)
-
-        self.map_frame = QWebEngineView()
-        layout.addWidget(self.map_frame)
-
-    def load_map(self):
-        self.map_frame.load(f"file:///{self.out_map}")
-
-    def load_gml(self):
-        file_dialog = QFileDialog(self)
-        file, _ = file_dialog.getOpenFileName(
-            self, "Wybierz plik GML", "", "Pliki GML (*.gml *.xml);;Wszystkie pliki (*.*)"
-        )
+    def load_gml(self, file):
+        # file_dialog = QFileDialog(self)
+        # file, _ = file_dialog.getOpenFileName(
+        #     self, "Wybierz plik GML", "", "Pliki GML (*.gml *.xml);;Wszystkie pliki (*.*)"
+        # )
         if file:
             (
                 self.dzialki, 
@@ -258,7 +248,6 @@ class MainWindow(QMainWindow):
                 self.punkty_graniczne,
             ) = read_gml(file)
             self.create_map()
-            self.load_map()
         else:
             return
     
@@ -513,10 +502,8 @@ class MainWindow(QMainWindow):
         self.map.save(self.out_map)
 
 if __name__ == '__main__':
-    app = QApplication([])
     window = MainWindow()
-    window.show()
-    app.exec()
+    window.load_gml(args.gml_file)
 
 
 
