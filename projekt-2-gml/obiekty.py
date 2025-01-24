@@ -17,7 +17,7 @@ class Obiekt:
         self.polygon = None
 
 class DzialkaEwidencyjna(Obiekt):
-    def __init__(self, idDzialki, geometria, numerKW, poleEwidencyjne, obreb_id):
+    def __init__(self, idDzialki, geometria, numerKW, poleEwidencyjne, obreb_id, dokumentWlasnosci, adresNieruchomosci):
         self.nrDzialki = idDzialki.split('.')[-1]       
         super().__init__('blue', self.nrDzialki, geometria)
         self.idDzialki = idDzialki
@@ -27,6 +27,8 @@ class DzialkaEwidencyjna(Obiekt):
         self.udzialy = []
         self.budynki = []
         self.obreb_id = obreb_id
+        self.dokumentWlasnosci = dokumentWlasnosci
+        self.adresNieruchomosci = adresNieruchomosci
 
     def add_udzial(self, udzial):
         self.udzialy.append(udzial)
@@ -41,7 +43,7 @@ class DzialkaEwidencyjna(Obiekt):
         return f'{self.idDzialki}'
 
 class Budynek(Obiekt):
-    def __init__(self, idBudynku, geometria, rodzajWgKST, liczbaKondygnacjiNadziemnych, liczbaKondygnacjiPodziemnych, powZabudowy, dzialka):
+    def __init__(self, idBudynku, geometria, rodzajWgKST, liczbaKondygnacjiNadziemnych, liczbaKondygnacjiPodziemnych, powZabudowy, dzialka, dokumentWlasnosci, numerKW, dodatkoweInformacje, adresNieruchomosci):
         self.nrBudynku = idBudynku.split('.')[-1].split('_')[0]
         self.rodzajWgKST = rodzajWgKST
         super().__init__('black', self.rodzajWgKST, geometria)
@@ -50,6 +52,10 @@ class Budynek(Obiekt):
         self.liczbaKondygnacjiPodziemnych = liczbaKondygnacjiPodziemnych
         self.powZabudowy = powZabudowy
         self.dzialka = dzialka
+        self.dokumentWlasnosci = dokumentWlasnosci
+        self.numerKW = numerKW
+        self.dodatkoweInformacje = dodatkoweInformacje
+        self.adresNieruchomosci = adresNieruchomosci
     
     def __str__(self):
         return f'{self.idBudynku=}, {self.powZabudowy=} '
@@ -114,7 +120,7 @@ class Adres:
         self.numerPorzadkowy = numerPorzadkowy
         
 class OsobaFizyczna:
-    def __init__(self, pierwszeImie, pierwszyCzlonNazwiska, drugieImie, imieOjca, imieMatki, pesel, plec, status, adresOsobyFizycznej):
+    def __init__(self, pierwszeImie, pierwszyCzlonNazwiska, drugieImie, imieOjca, imieMatki, pesel, plec, status, adresOsobyFizycznej, drugiCzlonNazwiska, informacjaOSmierci):
         self.pierwszeImie = pierwszeImie
         self.pierwszyCzlonNazwiska = pierwszyCzlonNazwiska
         self.drugieImie = drugieImie
@@ -124,6 +130,8 @@ class OsobaFizyczna:
         self.plec = plec
         self.status = status
         self.adresOsobyFizycznej = adresOsobyFizycznej
+        self.drugiCzlonNazwiska = drugiCzlonNazwiska
+        self.informacjaOSmierci = informacjaOSmierci
 
     def __str__(self):
         return f'{self.pierwszeImie} {self.pierwszyCzlonNazwiska}({self.pesel})'
@@ -134,15 +142,46 @@ class JednostkaEwidencyjna:
         self.geometria = geometria
         self.nazwaWlasna = nazwaWlasna
 
-    def __str__(self):
-        return f'{self.nazwaWlasna}'
-
 class ObrebEwidencyjny:
     def __init__(self, idObrebu, geometria, nazwaWlasna, jednostkaEwid_id):
         self.idObrebu = idObrebu
         self.geometria = geometria
         self.nazwaWlasna = nazwaWlasna
         self.jednostkaEwid_id = jednostkaEwid_id
-        
-    def __str__(self):
-        return f'{self.nazwaWlasna}'
+
+class ObiektTrwaleZwiazany:
+    def __init__(self, geometria, rodzaj, idBudynku):
+        self.geometria = geometria
+        self.rodzaj = rodzaj
+        self.idBudynku = idBudynku
+    
+class BlokBudynku:
+    def __init__(self, geometria, rodzaj, oznaczenie, numerNajnizszejKondygnacji, numerNajwyzszejKondygnacji, idBudynku):
+        self.geometria = geometria
+        self.rodzaj = rodzaj
+        self.oznaczenie = oznaczenie
+        self.numerNajnizszejKondygnacji = numerNajnizszejKondygnacji
+        self.numerNajwyzszejKondygnacji = numerNajwyzszejKondygnacji
+        self.idBudynku = idBudynku
+
+class PunktGraniczny:
+    def __init__(self, geometria, idPunktu, sposobPozyskania, spelnienieWarunkowDokl, rodzajStabilizacji, oznWMaterialeZrodlowym, numerOperatuTechnicznego, dodatkoweInformacje):
+        self.geometria = geometria
+        self.idPunktu = idPunktu
+        self.sposobPozyskania = sposobPozyskania
+        self.spelnienieWarunkowDokl = spelnienieWarunkowDokl
+        self.rodzajStabilizacji = rodzajStabilizacji
+        self.oznWMaterialeZrodlowym = oznWMaterialeZrodlowym
+        self.numerOperatuTechnicznego = numerOperatuTechnicznego
+        self.dodatkoweInformacje = dodatkoweInformacje
+
+class AdresNieruchomosci:
+    def __init__(self, nazwaMiejscowosci, idMiejscowosci, nazwaUlicy, idNazwyUlicy, numerPorzadkowy, numerLokalu, geometria):
+        self.nazwaMiejscowosci = nazwaMiejscowosci
+        self.idMiejscowosci = idMiejscowosci
+        self.nazwaUlicy = nazwaUlicy
+        self.idNazwyUlicy = idNazwyUlicy
+        self.numerPorzadkowy = numerPorzadkowy
+        self.numerLokalu = numerLokalu
+        self.geometria = geometria
+    

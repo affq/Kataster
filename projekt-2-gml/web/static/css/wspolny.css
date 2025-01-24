@@ -1,32 +1,5 @@
-:root{
-    --P1_2: red;
-    --P3: rgb(255, 166, 0);
-    --P4: yellow;
-    --P5: rgb(153, 0, 191);
-    --r: 30px;
-}
-
-.cluster-icon{
-    display: flex;
-    flex-direction: column;
-    flex-wrap: nowrap;
-    align-content: center;
-    justify-content: center;
-    align-items: center;
-}
-
-.awarieRow{
-    display: flex;
-}
-
-.awarieRow > div{
-    border-radius: 50%;
-    width: var(--r);
-    height: var(--r);
-    border: 1px solid black;
-    text-align:center;
-    line-height: var(--r);
-    font-weight: bold;
+*{
+    font-family: 'Helvetica', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
 }
 
 .marker-icon{
@@ -94,12 +67,16 @@
     border-radius: 20px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
     padding: 10px;
-    width: 35rem;
+    width: max-content;
+}
+
+.leaflet-popup-content p {
+    font-family: system-ui;
 }
 
 
 .leaflet-popup-content {
-    font: 1.3em Calibri, sans-serif;
+    font: 1.2rem Helvetica, sans-serif;
 }
 
 .leaflet-popup-content h3 {
@@ -209,4 +186,9 @@ tr {
 }
 tr:last-child {
     border-bottom: none;
+}
+
+.marker{
+    font-size: 0.9rem;
+    font-weight: bold;
 }
