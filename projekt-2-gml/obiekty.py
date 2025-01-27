@@ -17,7 +17,7 @@ class Obiekt:
         self.polygon = None
 
 class DzialkaEwidencyjna(Obiekt):
-    def __init__(self, idDzialki, geometria, numerKW, poleEwidencyjne, obreb_id, dokumentWlasnosci, adresNieruchomosci):
+    def __init__(self, idDzialki, geometria, numerKW, poleEwidencyjne, obreb_id, dokumentWlasnosci, adresNieruchomosci, punktyGraniczne):
         self.nrDzialki = idDzialki.split('.')[-1]       
         super().__init__('blue', self.nrDzialki, geometria)
         self.idDzialki = idDzialki
@@ -29,6 +29,7 @@ class DzialkaEwidencyjna(Obiekt):
         self.obreb_id = obreb_id
         self.dokumentWlasnosci = dokumentWlasnosci
         self.adresNieruchomosci = adresNieruchomosci
+        self.punktyGraniczne = punktyGraniczne
 
     def add_udzial(self, udzial):
         self.udzialy.append(udzial)
@@ -38,7 +39,7 @@ class DzialkaEwidencyjna(Obiekt):
     
     def add_budynek(self, budynek):
         self.budynki.append(budynek)
-    
+
     def __str__(self):
         return f'{self.idDzialki}'
 

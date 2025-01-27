@@ -255,7 +255,13 @@ class GML():
         <p><b>klasoużytki</b>: {format_klasouzytki(dzialka.klasouzytki)}</p>
         <p><b>udziały</b>: {format_udzialy(dzialka.udzialy)}</p>
         <p><b>budynki</b>: {format_budynki(dzialka.budynki)}</p>
+        <p><b>punkty graniczne</b>:</p>
     """ 
+        for punkt in dzialka.punktyGraniczne:
+            popup += f"""
+            <p><b>{punkt.idPunktu}</b>: {punkt.geometria}</p>
+        """
+
         return popup
 
     def popup_obreb_ewidencyjny(self, obreb):
@@ -303,7 +309,7 @@ class GML():
 
     def popup_obiekt_zwiazany(self, obiekt):
         popup = f"""
-        <h3><b>obiekt trwale związany</b></h3>
+        <h3><b>{rodzaj_obiektu_dict[obiekt.rodzaj]}</b></h3>
         <p><b>z budynkiem</b>: {obiekt.idBudynku}</p>
         <p><b>rodzaj obiektu</b>: {obiekt.rodzaj} ({rodzaj_obiektu_dict[obiekt.rodzaj]})</p>
     """ 
@@ -330,14 +336,15 @@ class GML():
         <p><b>oznaczenie w materiale źródłowym</b>: {punkt.oznWMaterialeZrodlowym}</p>
         <p><b>numer operatu technicznego</b>: {punkt.numerOperatuTechnicznego}</p>
         <p><b>dodatkowe informacje</b>: {punkt.dodatkoweInformacje}</p>
+        <p><b>współrzędne</b>: {punkt.geometria}</p>
     """
         return popup
 
     def create_map(self):
         self.map = folium.Map(location=[52.26548704146309, 20.552917654453303], zoom_start=17, tiles="CartoDB Positron")
-        css_link = r'<link rel="stylesheet" type="text/css" href="C:\Users\adria\Desktop\STUDIA_FOLDERY\zinformatyzowane-systemy-katastralne\projekt-2-gml\web\static\css\wspolny.css"/>'
+        css_link = r'<link rel="stylesheet" type="text/css" href="C:\Users\adria\OneDrive\Pulpit\zinformatyzowane-systemy-katastralne\projekt-2-gml\web\static\css\wspolny.css"/>'
         folium.Element(css_link).add_to(self.map.get_root().html)
-        js_link = r'<script src="C:\Users\adria\Desktop\STUDIA_FOLDERY\zinformatyzowane-systemy-katastralne\projekt-2-gml\web\static\js\control.js"></script>'
+        js_link = r'<script src="C:\Users\adria\OneDrive\Pulpit\zinformatyzowane-systemy-katastralne\projekt-2-gml\web\static\js\control.js"></script>'
         folium.Element(js_link).add_to(self.map.get_root().html)
         
         jednostki_ewidencyjne_fg = folium.FeatureGroup(name="jednostki ewidencyjne")

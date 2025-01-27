@@ -12,8 +12,15 @@ def stworz_dzialke(dzialka, soup):
     adresNieruchomosci_link = dzialka.find('egb:adresNieruchomosci').get('xlink:href') if dzialka.find('egb:adresNieruchomosci') is not None else ''
     adresNieruchomosci = soup.find('egb:EGB_AdresNieruchomosci', {'gml:id': adresNieruchomosci_link}) if adresNieruchomosci_link else None
     adresNieruchomosci = stworz_adres_nieruchomosci(adresNieruchomosci) if adresNieruchomosci else None
+    punkty_graniczne = dzialka.find_all('egb:punktGranicyDzialki')
+    punkty = []
+    for punkt in punkty_graniczne:
+        punkt_link = punkt.get('xlink:href')
+        punkt = soup.find('egb:EGB_PunktGraniczny', {'gml:id': punkt_link})
+        punkt = stworz_punkt_graniczny(punkt)
+        punkty.append(punkt)
 
-    return DzialkaEwidencyjna(idDzialki, geometria, numerKW, poleEwidencyjne, obreb_id, dokumentWlasnosci, adresNieruchomosci)
+    return DzialkaEwidencyjna(idDzialki, geometria, numerKW, poleEwidencyjne, obreb_id, dokumentWlasnosci, adresNieruchomosci, punkty)
 
 def stworz_klasouzytek(klasouzytek):
     OFU = klasouzytek.find('egb:OFU').text 
